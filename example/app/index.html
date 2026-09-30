@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Expenses</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #f4f5f4; color: #1a1a1a; }
+    header { background: #fff; padding: 20px 40px; border-bottom: 1px solid #ddd; font-size: 22px; font-weight: 600; }
+    main { padding: 40px; display: grid; grid-template-columns: 420px 1fr; gap: 32px; }
+    section { background: #fff; border-radius: 8px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    label { display: block; font-size: 14px; color: #555; margin: 16px 0 6px; }
+    input { width: 100%; box-sizing: border-box; font-size: 18px; padding: 10px 12px; border: 1px solid #bbb; border-radius: 6px; }
+    button { margin-top: 24px; font-size: 18px; padding: 10px 28px; border: 0; border-radius: 6px; background: #1f614e; color: #fff; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; font-size: 17px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+    td.amount, th.amount { text-align: right; }
+    .total { margin-top: 24px; font-size: 16px; color: #555; }
+    .total strong { display: block; font-size: 34px; color: #1a1a1a; }
+  </style>
+</head>
+<body>
+  <header>Expenses</header>
+  <main>
+    <section aria-label="New expense">
+      <label for="what">What</label>
+      <input id="what" value="Train ticket" />
+      <label for="amount">Amount</label>
+      <input id="amount" inputmode="decimal" />
+      <button id="save" type="button">Save</button>
+    </section>
+    <section aria-label="Expenses this month">
+      <table>
+        <thead><tr><th>What</th><th class="amount">Amount</th></tr></thead>
+        <tbody id="rows">
+          <tr><td>Lunch with client</td><td class="amount">420.00</td></tr>
+          <tr><td>Taxi</td><td class="amount">185.50</td></tr>
+        </tbody>
+      </table>
+      <div class="total" id="total" aria-label="Total">Total<strong>605.50</strong></div>
+    </section>
+  </main>
+  <script>
+    const rows = document.getElementById("rows");
+    const total = () =>
+      [...rows.querySelectorAll("td.amount")].reduce((sum, td) => sum + Number(td.textContent), 0);
+    document.getElementById("save").addEventListener("click", () => {
+      const amount = Number(document.getElementById("amount").value.replace(",", "."));
+      if (!amount) return;
+      const row = document.createElement("tr");
+      row.innerHTML = "<td></td><td class='amount'></td>";
+      row.children[0].textContent = document.getElementById("what").value;
+      row.children[1].textContent = amount.toFixed(2);
+      rows.appendChild(row);
+      document.querySelector("#total strong").textContent = total().toFixed(2);
+    });
+  </script>
+</body>
+</html>

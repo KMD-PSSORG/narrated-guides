@@ -1,0 +1,26 @@
+{
+  "name": "narrated-guides",
+  "version": "0.1.0",
+  "description": "Narrated screen-recorded guide videos from a manuscript: ElevenLabs voice, Playwright recording timed by the voice, ffmpeg assembly and subtitles.",
+  "type": "module",
+  "bin": {
+    "narrated-guides": "cli.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}
