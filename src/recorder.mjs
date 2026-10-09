@@ -101,6 +101,7 @@ export const record = async (config, video, setup) => {
       case "vis":
         if (target === "slutkort") {
           await stage("cursorVisible", false);
+          await stage("clear");
           await stage("step", null);
           await stage("show", parts.endCard ?? cards.endCard({ next: parts.next }));
         } else if (parts.show) {
