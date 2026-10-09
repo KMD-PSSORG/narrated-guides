@@ -42,6 +42,9 @@ recording.
 
 ## Writing the manuscript
 
+- A scene with another speaker uses ```` ```speak <name> ````, with the name
+  mapped in `voice.voices` and its id in the env file. Split a dialogue into
+  scenes, one speaker per scene.
 - Write one short thought per scene. A scene that waits on the server should start with that wait (see below).
 - Put a cue directly in front of the word it should land on: `{peg: Save} Save`.
 - Give actions that move the cursor room. Two cursor cues two words apart

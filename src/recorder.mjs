@@ -44,6 +44,9 @@ const readScenes = (audioDir) =>
  * - `type(target)` — performs {skriv}
  * - `show(target)` — optional; performs {vis} instead of revealing a card element
  * - `before[scene]()` — navigation and waits before the scene's audio
+ * - `onStart[scene]({ words, duration, voice })` — called the moment the scene's
+ *   audio starts and not awaited, for things that follow the words themselves,
+ *   such as a mouth moving. `words` hold `start` and `end` in seconds from then.
  * - `next` — the end card's text, or `endCard` — a whole end card instead
  *
  * `tools` are `{ page, stage, moveTo, rest, pointAt, cards, sleep, viewport }`;
@@ -146,6 +149,9 @@ export const record = async (config, video, setup) => {
 
     const start = Date.now();
     timeline.scenes.push({ scene: scene.number, start: since(), duration: scene.duration });
+    Promise.resolve()
+      .then(() => parts.onStart?.[scene.number]?.({ words: scene.words, duration: scene.duration, voice: scene.voice ?? null }))
+      .catch((err) => console.warn(`  scene ${scene.number}: onStart failed: ${err.message}`));
     const late = [];
     for (const cue of scene.cues.filter((c) => !opening.includes(c))) {
       const due = cueDue(start, cue, config.leads);
