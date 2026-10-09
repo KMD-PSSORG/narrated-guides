@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 80" width="250" height="80">
+  <g transform="translate(4 8)">
+    <rect x="0" y="0" width="64" height="64" rx="16" fill="#2f4fd8"/>
+    <path d="M18 40 a16 16 0 1 1 8 13" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    <path d="M17 52 l9 2 -1 -9" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="26" y="24" width="12" height="12" rx="2" fill="#ffb02e"/>
+  </g>
+  <text x="80" y="50" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="27" font-weight="700" fill="#14213d">ProcureFlow</text>
+</svg>
