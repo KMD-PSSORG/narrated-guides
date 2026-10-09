@@ -45,6 +45,12 @@ recording.
 - A scene with another speaker uses ```` ```speak <name> ````, with the name
   mapped in `voice.voices` and its id in the env file. Split a dialogue into
   scenes, one speaker per scene.
+- Propose voices from the account's library by name (`GET /v2/voices`, read
+  the key from the env file) and let the human choose. Write the chosen ids
+  into the env file from a script, so they are never printed.
+- Give a cursor cue near the start of a scene a word or two of speech before
+  it. A `{klik}` on the second word cannot start its 0.65 s head start before
+  the scene does, so it runs late. "Now click {klik: Next} Next" is on time.
 - Write one short thought per scene. A scene that waits on the server should start with that wait (see below).
 - Put a cue directly in front of the word it should land on: `{peg: Save} Save`.
 - Give actions that move the cursor room. Two cursor cues two words apart
@@ -86,6 +92,22 @@ recording.
 - **Cards are part of the page.** Title and end cards live in the app's
   page, so there is no white flash. Hide them with `stage("hide")`, wait
   about 700 ms, and only then show the cursor.
+- **Long typing must not block.** `type()` is awaited, so typing a long text
+  delays every later cue in the scene. Start it without awaiting, keep the
+  promise, and let a later `point` target await it before it returns the
+  locator. A counter or validation message can then be circled while it changes.
+- **Close neighbours get one ring at a time.** Rings stay until the scene
+  ends. When the voice walks through items in a list, clear the rings in the
+  `ring` function before returning the next box.
+- **Single-page apps keep the stage.** Navigating by changing
+  `location.hash` (via `page.evaluate`) keeps the document, so the cursor,
+  the step badge and any open card survive. Prefer it to `page.goto`.
+- **The app's CSS reaches the cards.** The stage lives in the app's page, so
+  an app rule for a common class name (`.card`, `.step`, `.kicker`) can change
+  a card. Check the title, phases and end cards in the frames.
+- **Characters can follow the voice.** `onStart[N]` receives the scene's
+  words with their times the moment the audio starts. Pass them to the page
+  and let it animate, e.g. open a mouth on every word.
 - **Run long commands in the foreground.** A voicing or recording started in
   the background can die when the shell session ends.
 
@@ -100,10 +122,10 @@ recording.
 
 ## Secrets
 
-- The ElevenLabs key and voice id stay in the file named by
+- The ElevenLabs key and all voice ids stay in the file named by
   `voice.envFile`. That file must be git-ignored. Never print, log, echo or
   commit the values, not even partly.
-- Before committing, scan the staged diff for the key and voice id without
+- Before committing, scan the staged diff for the key and voice ids without
   printing them, for example with `git diff --cached | grep -c -F -f <(...)`,
   and report only the count.
 - Logins and tokens for the app go in `initScripts` or a custom
@@ -115,3 +137,5 @@ recording.
 
 - Commit manuscripts, recording scripts, `guides.config.mjs` and seed scripts.
 - Git-ignore `video/out/`, which holds audio, recordings, mp4, srt and frames. Hand the finished videos over separately.
+- `examples/procureflow/` in the package is a full example with four voices,
+  `onStart`, a single-page app and long typing. Read it before a larger video.
