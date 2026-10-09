@@ -215,6 +215,11 @@ node ../cli.mjs assemble demo
 node ../cli.mjs frames demo
 ```
 
+`examples/procureflow/` is a larger example: a fake procurement portal and an
+18-scene guide with four voices, a talking pumpkin driven by `onStart`, and
+scenes that explain how the guide itself was made. See its
+[README](examples/procureflow/README.md).
+
 ## Tests
 
 ```bash

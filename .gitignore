@@ -4,3 +4,4 @@ out/
 .env*
 elevenlabs.txt
 .DS_Store
+published/

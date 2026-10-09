@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ProcureFlow 365</title>
+    <link rel="icon" href="logo.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#/dashboard"><img src="logo.svg" alt="ProcureFlow 365" /></a>
+      <div class="search">
+        <input type="search" aria-label="Search everything" placeholder="Search requisitions, items, people, meaning…" />
+      </div>
+      <div class="topbar-right">
+        <label class="role-switch">
+          <span>Viewing as</span>
+          <select id="role" aria-label="Viewing as">
+            <option value="requester">Mette Holm (Requester)</option>
+            <option value="approver">Henrik Dal (Approver)</option>
+          </select>
+        </label>
+        <button class="bell" aria-label="Notifications" title="You have notifications. You always will.">
+          <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 22a2.5 2.5 0 0 0 2.5-2.5h-5A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 1 0-14 0v5l-2 2v1h18v-1l-2-2Z" fill="currentColor"/></svg>
+          <span class="count">99+</span>
+        </button>
+        <div class="avatar" id="avatar">MH</div>
+      </div>
+    </header>
+
+    <nav class="sidebar" aria-label="Main">
+      <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+      <a href="#/new" data-route="new">New requisition</a>
+      <a href="#/requisitions" data-route="requisitions">My requisitions</a>
+      <a href="#/approvals" data-route="approvals">Approvals <span class="pill" id="approvalCount">2</span></a>
+      <a href="#/archive" data-route="archive">Archive</a>
+      <a href="#/help" data-route="help">Help centre</a>
+      <div class="sidebar-foot">
+        <div class="uptime">System status: <b>Operational</b><br /><small>(Approvals: Contemplative)</small></div>
+      </div>
+    </nav>
+
+    <main id="view" tabindex="-1"></main>
+
+    <div class="ticker" aria-label="Announcements"><div class="ticker-track" id="ticker"></div></div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="haunt" id="haunt" aria-hidden="true">
+      <div class="fog"></div>
+      <div class="pumpkin-wrap">
+        <svg class="pumpkin" viewBox="0 0 400 380" width="400" height="380">
+          <defs>
+            <radialGradient id="pBody" cx="50%" cy="45%" r="60%">
+              <stop offset="0%" stop-color="#ff9a2e" />
+              <stop offset="70%" stop-color="#e8650a" />
+              <stop offset="100%" stop-color="#9c3d00" />
+            </radialGradient>
+            <radialGradient id="pGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fff4a8" />
+              <stop offset="55%" stop-color="#ffc02e" />
+              <stop offset="100%" stop-color="#ff7a00" />
+            </radialGradient>
+          </defs>
+          <path d="M196 70 C190 40 200 18 222 8 L232 22 C214 30 210 48 214 70 Z" fill="#4c6b22" />
+          <ellipse cx="110" cy="210" rx="95" ry="140" fill="url(#pBody)" />
+          <ellipse cx="290" cy="210" rx="95" ry="140" fill="url(#pBody)" />
+          <ellipse cx="200" cy="210" rx="110" ry="150" fill="url(#pBody)" />
+          <path d="M150 80 C130 150 130 280 150 350 M250 80 C270 150 270 280 250 350" stroke="#b34a00" stroke-width="5" fill="none" opacity=".5" />
+          <g class="eyes" fill="url(#pGlow)">
+            <path d="M110 150 L165 140 L150 195 Z" />
+            <path d="M290 150 L235 140 L250 195 Z" />
+          </g>
+          <path class="nose" d="M200 200 L185 228 L215 228 Z" fill="url(#pGlow)" />
+          <g class="mouth">
+            <path class="upper" fill="url(#pGlow)"
+              d="M105 250 Q200 290 295 250 L282 272 L262 262 L248 282 L228 270 L212 290 L196 272 L180 290 L164 270 L146 282 L134 262 L116 272 Z" />
+            <path class="jaw" fill="url(#pGlow)"
+              d="M116 272 L134 262 L146 282 L164 270 L180 290 L196 272 L212 290 L228 270 L248 282 L262 262 L282 272 Q200 330 116 272 Z" />
+          </g>
+        </svg>
+        <div class="nameplate"><b>G. Gourdon</b><span>Senior Procurement Officer · 1962–1987 · still on the payroll</span></div>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
