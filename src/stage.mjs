@@ -52,6 +52,7 @@ const css = ({ accent, dark, text }) => `
     box-shadow: 0 8px 24px ${rgba(accent, 0.25)}; }
   #vstage .phase.lit .number, #vstage .phase.lit .steps { color: ${dark}; }
   #vstage .roles { margin-top: 56px; display: flex; flex-direction: column; gap: 18px; font-size: 34px; }
+  #vstage .roles .role { display: block; font-size: inherit; color: inherit; }
   #vstage .roles b { color: ${dark}; }
   #vstage .step { position: absolute; top: 14px; left: 50%; transform: translate(-50%, -12px); opacity: 0;
     transition: opacity 300ms ease, transform 300ms ease; background: #fff; border: 2px solid ${accent};

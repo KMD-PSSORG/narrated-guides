@@ -22,7 +22,7 @@ The workflow for an AI agent (stops, lessons, data and secret rules) is in
 - Node 20 or later
 - `ffmpeg` and `ffprobe` on the PATH
 - Playwright with Chromium (`npx playwright install chromium`)
-- An ElevenLabs API key and a voice id
+- An ElevenLabs API key, and a voice id for each voice in the video
 
 ## Install in a project
 
@@ -43,7 +43,7 @@ Keep the voice settings in a file that git ignores, by default
 ```text
 ELEVEN_LABS_API_KEY=...        # ELEVENLABS_API_KEY works too
 VOICE_ID=...                   # the default voice
-VOICE_ID_PUMPKIN=...           # optional: one entry per named voice in voice.voices
+VOICE_ID_FINANCE=...           # optional: one entry per named voice in voice.voices
 ```
 
 ## Project layout
@@ -67,7 +67,7 @@ npx narrated-guides assemble <name> [file] # <file>.mp4 and <file>.srt, 1920 × 
 npx narrated-guides frames <name> [file]   # a still at each scene start and 1.5 s after each cue
 ```
 
-`tts` sends a scene to ElevenLabs only when its text, the voice or the model
+`tts` sends a scene to ElevenLabs only when its text, its voice or the model
 has changed. Moving a cue costs nothing. It only moves the cue to another word.
 
 ## The manuscript
@@ -80,12 +80,20 @@ has changed. Moving a cue costs nothing. It only moves the cue to another word.
 ```speak
 {trin: 2} {skriv: Amount} Type the amount, [pauses] {klik: Save} save it... {ring: Total} and the total is updated straight away.
 ```
+
+## Scene 4 · A word from Finance
+
+*Screen:* The total is still circled.
+
+```speak finance
+[stern] {ring: Total} Receipts above five hundred kroner need a second approver.
+```
 ````
 
 - `## Scene N · Title` starts a scene. Each scene has exactly one ```` ```speak ```` block.
-- ```` ```speak pumpkin ```` voices the scene with the named voice from
+- ```` ```speak finance ```` voices the scene with the named voice from
   `voice.voices` in the config instead of the default voice. A video can switch
-  voices from scene to scene.
+  voices from scene to scene; a dialogue is split into scenes, one speaker each.
 - Everything outside the speak blocks is notes for the people who read the manuscript.
 - `[tags]` are ElevenLabs audio tags (`[warmly]`, `[pauses]`, `[calm, clear]`). They reach the voice but are not spoken.
 - `{verb: target}` is a cue. It is removed before voicing and is performed
@@ -101,7 +109,7 @@ has changed. Moving a cue costs nothing. It only moves the cue to another word.
 | `{ring: X}` | A ring is drawn around X | `ring[X]()`, a box `{x, y, width, height}` |
 | `{skriv: X}` | Typing | `type(X)` |
 | `{vis: X}` | Reveals the card element `data-id="X"`, or `show(X)` if given | optional `show(X)` |
-| `{vis: slutkort}` | The end card | `next`, or a whole `endCard` |
+| `{vis: slutkort}` | The end card; rings and the step badge are cleared | `next`, or a whole `endCard` |
 | `{fremhæv: X}` | Lights up the card element `data-id="X"`, e.g. `phase 2` | nothing |
 | `{trin: N}` | The step badge for step N | nothing (needs `process`) |
 
@@ -133,6 +141,9 @@ await record(config, "demo", ({ page, stage, moveTo, rest, pointAt, cards, sleep
       await stage("swap", cards.titleCard({ title: "Expenses", subtitle: "Registering an expense" }));
     },
     3: async () => { await stage("hide"); await sleep(700); await stage("cursorVisible", true); await rest(); },
+  },
+  onStart: {
+    4: ({ words }) => page.evaluate((w) => window.mascot.talk(w), words), // the app's own talking character
   },
 }));
 ```
@@ -184,7 +195,7 @@ export default {
   manuscripts: "video/manuscripts",
   voice: {
     envFile: ".elevenlabs.env", model: "eleven_v4", format: "mp3_44100_128",
-    voices: { pumpkin: "VOICE_ID_PUMPKIN" },    // voice name in the manuscript → entry in envFile
+    voices: { finance: "VOICE_ID_FINANCE" },    // voice name in the manuscript → entry in envFile
   },
   theme: { accent: "#43b02a", dark: "#1f614e", text: "#1a1a1a", logo: "public/logo.svg" },
   labels: { kicker: "Video guide", next: "Next video", phase: "Phase", step: "Step", overview: "The process" },
