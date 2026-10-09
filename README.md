@@ -83,7 +83,7 @@ has changed. Moving a cue costs nothing. It only moves the cue to another word.
 
 ## Scene 4 · A word from Finance
 
-*Screen:* The total is still circled.
+*Screen:* The total is circled again.
 
 ```speak finance
 [stern] {ring: Total} Receipts above five hundred kroner need a second approver.
