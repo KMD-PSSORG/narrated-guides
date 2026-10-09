@@ -12,6 +12,7 @@ describe("resolveConfig", () => {
     const config = resolveConfig({}, root);
     assert.deepEqual(config.viewport, { width: 1760, height: 990 });
     assert.equal(config.voice.model, "eleven_v4");
+    assert.deepEqual(config.voice.voices, {});
     assert.equal(config.outDir, "/project/video/out");
     assert.equal(config.manuscripts, "/project/video/manuscripts");
     assert.equal(config.voice.envFile, "/project/.elevenlabs.env");
@@ -56,8 +57,22 @@ describe("readVoiceSecrets", () => {
   it("reads the key and the voice", () => {
     assert.deepEqual(
       readVoiceSecrets(file("ELEVEN_LABS_API_KEY=abc=123\n\nVOICE_ID = v1 \n")),
-      { key: "abc=123", voice: "v1" },
+      { key: "abc=123", voice: "v1", voices: {} },
     );
+  });
+
+  it("accepts the key under ElevenLabs' own name", () => {
+    assert.equal(readVoiceSecrets(file("ELEVENLABS_API_KEY=k\nVOICE_ID=v1\n")).key, "k");
+  });
+
+  it("reads the named voices from the entries the config points to", () => {
+    const at = file("ELEVEN_LABS_API_KEY=k\nVOICE_ID=v1\nVOICE_ID_PUMPKIN=v2\n");
+    assert.deepEqual(readVoiceSecrets(at, { pumpkin: "VOICE_ID_PUMPKIN" }).voices, { pumpkin: "v2" });
+  });
+
+  it("names a missing named voice's entry", () => {
+    const at = file("ELEVEN_LABS_API_KEY=k\nVOICE_ID=v1\n");
+    assert.throws(() => readVoiceSecrets(at, { pumpkin: "VOICE_ID_PUMPKIN" }), /VOICE_ID_PUMPKIN/);
   });
 
   it("names the file and the missing entry, and never the values", () => {

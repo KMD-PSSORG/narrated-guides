@@ -17,7 +17,7 @@ const DEFAULTS = {
   viewport: { width: 1760, height: 990 },
   outDir: "video/out",
   manuscripts: "video/manuscripts",
-  voice: { envFile: ".elevenlabs.env", model: "eleven_v4", format: "mp3_44100_128" },
+  voice: { envFile: ".elevenlabs.env", model: "eleven_v4", format: "mp3_44100_128", voices: {} },
   theme: {},
   labels: {},
   process: null,
@@ -64,7 +64,13 @@ export const loadConfig = async (root = process.cwd()) => {
   return resolveConfig(user ?? {}, root);
 };
 
-export const readVoiceSecrets = (file) => {
+/**
+ * The key, the default voice id and the id of each named voice. `voices` maps
+ * a voice name used in the manuscript to the entry in the file holding its id,
+ * e.g. `{ pumpkin: "VOICE_ID_PUMPKIN" }`. The key may also be given under
+ * ElevenLabs' own name, ELEVENLABS_API_KEY.
+ */
+export const readVoiceSecrets = (file, voices = {}) => {
   if (!existsSync(file)) throw new Error(`No voice settings at ${file}. It needs ELEVEN_LABS_API_KEY and VOICE_ID.`);
   const values = Object.fromEntries(
     readFileSync(file, "utf8")
@@ -76,7 +82,12 @@ export const readVoiceSecrets = (file) => {
         return [line.slice(0, at).trim(), line.slice(at + 1).trim()];
       }),
   );
-  const missing = ["ELEVEN_LABS_API_KEY", "VOICE_ID"].filter((name) => !values[name]);
+  values.ELEVEN_LABS_API_KEY ||= values.ELEVENLABS_API_KEY;
+  const missing = ["ELEVEN_LABS_API_KEY", "VOICE_ID", ...Object.values(voices)].filter((name) => !values[name]);
   if (missing.length) throw new Error(`${file} has no ${missing.join(" and ")}.`);
-  return { key: values.ELEVEN_LABS_API_KEY, voice: values.VOICE_ID };
+  return {
+    key: values.ELEVEN_LABS_API_KEY,
+    voice: values.VOICE_ID,
+    voices: Object.fromEntries(Object.entries(voices).map(([name, entry]) => [name, values[entry]])),
+  };
 };

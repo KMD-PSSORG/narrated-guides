@@ -41,8 +41,9 @@ Keep the voice settings in a file that git ignores, by default
 `.elevenlabs.env` in the project root:
 
 ```text
-ELEVEN_LABS_API_KEY=...
-VOICE_ID=...
+ELEVEN_LABS_API_KEY=...        # ELEVENLABS_API_KEY works too
+VOICE_ID=...                   # the default voice
+VOICE_ID_PUMPKIN=...           # optional: one entry per named voice in voice.voices
 ```
 
 ## Project layout
@@ -82,6 +83,9 @@ has changed. Moving a cue costs nothing. It only moves the cue to another word.
 ````
 
 - `## Scene N · Title` starts a scene. Each scene has exactly one ```` ```speak ```` block.
+- ```` ```speak pumpkin ```` voices the scene with the named voice from
+  `voice.voices` in the config instead of the default voice. A video can switch
+  voices from scene to scene.
 - Everything outside the speak blocks is notes for the people who read the manuscript.
 - `[tags]` are ElevenLabs audio tags (`[warmly]`, `[pauses]`, `[calm, clear]`). They reach the voice but are not spoken.
 - `{verb: target}` is a cue. It is removed before voicing and is performed
@@ -137,6 +141,11 @@ await record(config, "demo", ({ page, stage, moveTo, rest, pointAt, cards, sleep
 scene it clears the rings and runs `before[N]`. After the last scene the end
 card stays on screen for 2.5 seconds.
 
+`onStart[N]({ words, duration, voice })` is called the moment scene N's audio
+starts, and is not awaited. Each word has `start` and `end` in seconds from
+that moment, so the page can follow the speech itself, for example a talking
+character whose mouth opens on every word.
+
 **Tools passed to `setup`:**
 
 | Tool | Purpose |
@@ -173,7 +182,10 @@ export default {
   viewport: { width: 1760, height: 990 },       // recorded size; scaled to 1920 × 1080
   outDir: "video/out",
   manuscripts: "video/manuscripts",
-  voice: { envFile: ".elevenlabs.env", model: "eleven_v4", format: "mp3_44100_128" },
+  voice: {
+    envFile: ".elevenlabs.env", model: "eleven_v4", format: "mp3_44100_128",
+    voices: { pumpkin: "VOICE_ID_PUMPKIN" },    // voice name in the manuscript → entry in envFile
+  },
   theme: { accent: "#43b02a", dark: "#1f614e", text: "#1a1a1a", logo: "public/logo.svg" },
   labels: { kicker: "Video guide", next: "Next video", phase: "Phase", step: "Step", overview: "The process" },
   process: {                                     // only for step badges and the phases card

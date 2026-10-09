@@ -7,7 +7,8 @@
  * result is `scene-NN.json`: the words with their times, and the cues with
  * the time of the word they are anchored to.
  *
- * A scene is only sent again when its text, the voice or the model changes;
+ * Each scene is voiced by the default voice, or by the named voice its speak
+ * block asks for. A scene is only sent again when its text, its voice or the model changes;
  * the hash of the three is stored beside the audio. Cues are not part of the
  * hash, so moving a cue re-anchors it without a new recording of the voice.
  */
@@ -97,12 +98,20 @@ export const voiceManuscript = async (config, manuscript) => {
   const out = path.join(config.outDir, name, "audio");
   mkdirSync(out, { recursive: true });
 
-  const secrets = readVoiceSecrets(config.voice.envFile);
-  const voice = { ...secrets, model: config.voice.model, format: config.voice.format };
+  const { key, voice: defaultVoice, voices } = readVoiceSecrets(config.voice.envFile, config.voice.voices);
   const scenes = readManuscript(file);
   let characters = 0;
 
   for (const scene of scenes) {
+    if (scene.voice && !voices[scene.voice]) {
+      throw new Error(`Scene ${scene.number} uses the voice "${scene.voice}", which voice.voices in the config does not name.`);
+    }
+    const voice = {
+      key,
+      voice: scene.voice ? voices[scene.voice] : defaultVoice,
+      model: config.voice.model,
+      format: config.voice.format,
+    };
     const id = `scene-${String(scene.number).padStart(2, "0")}`;
     const hash = createHash("sha256").update(`${voice.model}\n${voice.voice}\n${scene.text}`).digest("hex").slice(0, 16);
     const mp3 = path.join(out, `${id}.mp3`);
@@ -112,7 +121,7 @@ export const voiceManuscript = async (config, manuscript) => {
     if (cached?.hash === hash && existsSync(mp3)) {
       const { cues, warning } = anchorCues(scene, cached.words);
       if (warning) console.warn(`  ${warning}`);
-      writeFileSync(json, JSON.stringify({ ...cached, title: scene.title, cues }, null, 2));
+      writeFileSync(json, JSON.stringify({ ...cached, title: scene.title, voice: scene.voice ?? null, cues }, null, 2));
       console.log(`${id}: unchanged audio, ${cues.length} cues`);
       continue;
     }
@@ -124,10 +133,15 @@ export const voiceManuscript = async (config, manuscript) => {
     const duration = durationOf(mp3);
     writeFileSync(
       json,
-      JSON.stringify({ scene: scene.number, title: scene.title, hash, timing, duration, text: scene.text, words, cues }, null, 2),
+      JSON.stringify(
+        { scene: scene.number, title: scene.title, voice: scene.voice ?? null, hash, timing, duration, text: scene.text, words, cues },
+        null,
+        2,
+      ),
     );
     characters += scene.text.length;
-    console.log(`${id}: ${duration.toFixed(1)} s, ${words.length} words, ${cues.length} cues (${timing})`);
+    const by = scene.voice ? `, voice ${scene.voice}` : "";
+    console.log(`${id}: ${duration.toFixed(1)} s, ${words.length} words, ${cues.length} cues (${timing}${by})`);
   }
 
   console.log(`sent ${characters} characters to ElevenLabs`);

@@ -1,7 +1,9 @@
 /**
  * Reads a video manuscript: `## Scene N · Title` headings, each followed by one
  * ```speak block. Inside the block, `[tags]` are ElevenLabs audio tags and go
- * to the voice; `{verb: target}` are screen cues and do not.
+ * to the voice; `{verb: target}` are screen cues and do not. ```speak <name>
+ * voices the scene with the named voice from `voice.voices` instead of the
+ * default one.
  *
  * A cue is anchored to the spoken word right after it, counted among the words
  * the voice actually says — audio tags excluded. The recorder later looks that
@@ -10,6 +12,7 @@
 import { readFileSync } from "node:fs";
 
 const SCENE = /^## Scene (\d+) · (.+)$/;
+const SPEAK = /^```speak(?:\s+([\w-]+))?\s*$/;
 const CUE = /\{(\p{L}+):\s*([^}]+)\}/gu;
 const TAG = /^\[[^\]]*\]$/;
 
@@ -50,14 +53,16 @@ export const parseManuscript = (source) => {
       scenes.push(current);
       continue;
     }
-    if (line.startsWith("```speak")) {
+    const fence = line.match(SPEAK);
+    if (fence) {
+      if (!current) throw new Error("A speak block before the first scene heading.");
+      if (fence[1]) current.voice = fence[1];
       inSpeak = true;
       speak = [];
       continue;
     }
     if (inSpeak && line.startsWith("```")) {
       inSpeak = false;
-      if (!current) throw new Error("A speak block before the first scene heading.");
       Object.assign(current, splitCues(speak.join(" ").trim()));
       continue;
     }

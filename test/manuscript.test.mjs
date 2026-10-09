@@ -60,6 +60,23 @@ describe("parseManuscript", () => {
     ]);
   });
 
+  it("reads the voice named on the speak fence, and leaves it out when none is named", () => {
+    const named = "## Scene 2 · B\n\n```speak pumpkin\nBoo.\n```\n";
+    const scenes = parseManuscript(scene("## Scene 1 · A", "Hello.") + named);
+    assert.deepEqual(
+      scenes.map(({ voice, text }) => ({ voice, text })),
+      [
+        { voice: undefined, text: "Hello." },
+        { voice: "pumpkin", text: "Boo." },
+      ],
+    );
+  });
+
+  it("does not take another fence for a speak block", () => {
+    const [first] = parseManuscript(`## Scene 1 · A\n\n\`\`\`speaker\nNo.\n\`\`\`\n\n\`\`\`speak\nYes.\n\`\`\`\n`);
+    assert.equal(first.text, "Yes.");
+  });
+
   it("ignores text outside speak blocks", () => {
     const [first] = parseManuscript(`# Video\n\nIntro {peg: x} text.\n\n${scene("## Scene 1 · A", "Spoken.")}`);
     assert.equal(first.text, "Spoken.");
