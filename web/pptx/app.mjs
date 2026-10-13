@@ -162,7 +162,10 @@ const renderCheck = () => {
 
 // --- step 3: voices ---
 
-const voiceNames = () => [NARRATOR, ...new Set(state.deck.segments.map((s) => s.voice).filter(Boolean))];
+const voiceNames = () => [
+  ...(state.deck.segments.some((s) => !s.voice) ? [NARRATOR] : []),
+  ...new Set(state.deck.segments.map((s) => s.voice).filter(Boolean)),
+];
 
 const renderVoicePicks = () => {
   $("#voice-picks").replaceChildren(

@@ -9,7 +9,7 @@ const da = {
   privacy: "Det hele sker i din browser. Præsentationen bliver ikke uploadet nogen steder, og din ElevenLabs-nøgle sendes kun til ElevenLabs sammen med teksten fra noterne.",
   s1: "Din præsentation",
   drop: "<strong>Træk en .pptx herind</strong> eller klik for at vælge en",
-  sample: 'Har du ikke en ved hånden? <button type="button" class="link" id="sample">Prøv eksemplet</button>, en tidslinje i tre faser med en ekstra stemme.',
+  sample: 'Har du ikke en ved hånden? <button type="button" class="link" id="sample">Prøv eksemplet</button>: en marketingekspert, der viser alle effekterne, mens fortælleren prøver at komme til orde.',
   "help-notes-summary": "Sådan skriver du noterne",
   "help-notes-body": `<p>Skriv i noterne, hvad stemmen skal sige på det slide. Slides uden noter bliver ikke rørt.</p>
 <pre>En indkøbsrekvisition går gennem tre faser.

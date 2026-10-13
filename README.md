@@ -283,7 +283,8 @@ There are two ways to run it, sharing the same code (`src/pptx.mjs`):
   restricted one. Voices are picked
   from the key's account, and clips are cached in the browser, so running a
   deck again only voices what changed. The page is in Danish, with a switch
-  to English, and has a sample deck in each. Serve the repository root and
+  to English, and has a sample deck in each; the Danish one is a short show
+  of every entrance effect, with two voices and a guide. Serve the repository root and
   open `/web/pptx/` (e.g. `python3 -m http.server`, or GitHub Pages).
 - **The command** `npx narrated-guides pptx deck.pptx` uses the project's
   voices like a manuscript does and writes `deck-narrated.pptx` beside the
