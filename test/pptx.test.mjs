@@ -156,6 +156,22 @@ describe("picked effects", () => {
     assert.ok(!codes.includes("unknown-effect"));
   });
 
+  it("replaces the entrances it made when a narrated deck is narrated again", async () => {
+    const spidOf = (deck) => String(deck.slides[2].shapes.get("Punchline"));
+    const first = await openDeck(await withNotes3("{vis: Punchline, zoom} Spørgsmål?"));
+    const once = await narrateDeck(first, clipsFor(first));
+    const zip = await JSZip.loadAsync(once.bytes);
+    const part = "ppt/notesSlides/notesSlide3.xml";
+    zip.file(part, (await zip.file(part).async("string")).replace("{vis: Punchline, zoom}", "{vis: Punchline, wipe}"));
+    const second = await openDeck(await zip.generateAsync({ type: "uint8array" }));
+    assert.deepEqual((await checkDeck(second)).warnings, []);
+    const twice = await narrateDeck(second, clipsFor(second));
+    const doc = await slideXml(twice.bytes, 3);
+    const entrances = els(doc, "cTn").filter((c) => c.getAttribute("presetClass") === "entr" && c.getElementsByTagNameNS(P, "spTgt")[0]?.getAttribute("spid") === spidOf(second));
+    assert.deepEqual(entrances.map((c) => c.getAttribute("presetID")), ["22"]);
+    assert.equal(els(doc, "bldP").filter((b) => b.getAttribute("spid") === spidOf(second)).length, 1);
+  });
+
   it("keeps an animation made in PowerPoint and says so", async () => {
     const deck = await openDeck(await withNotes("animated", 2, "Tre faser. {vis: Phase 1, zoom} Først."));
     const { warnings } = await checkDeck(deck);

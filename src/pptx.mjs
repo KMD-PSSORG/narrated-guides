@@ -253,17 +253,37 @@ const targetOf = (node) => {
 
 const mainSequence = (doc) => all(doc, NS.p, "cTn").find((c) => c.getAttribute("nodeType") === "mainSeq") ?? null;
 
+// The entrances narration added are listed, as "spid/presetID" pairs, in the
+// title of the slide's first narration picture, which PowerPoint keeps when it
+// saves; the timing nodes themselves cannot carry a mark of their own.
+const MADE = "narrated-guides entrances:";
+
+/** The timing nodes of the entrances an earlier narration added. */
+const madeEntrances = (doc) => {
+  const record = all(doc, NS.p, "cNvPr").filter(isNarration).map((c) => c.getAttribute("title") ?? "").find((t) => t.startsWith(MADE));
+  const main = mainSequence(doc);
+  const found = new Set();
+  if (!record || !main) return found;
+  const entrances = all(main, NS.p, "cTn").filter((c) => c.getAttribute("presetClass") === "entr");
+  for (const entry of record.slice(MADE.length).trim().split(/\s+/).filter(Boolean)) {
+    const [spid, preset] = entry.split("/").map(Number);
+    const ctn = entrances.find((c) => !found.has(c) && targetOf(c) === spid && Number(c.getAttribute("presetID")) === preset);
+    if (ctn) found.add(ctn);
+  }
+  return found;
+};
+
 /**
  * The effects of the main sequence in order, each with its click group and
  * its offset from the start of that group (inner group delay + own delay).
  */
-const effectsOf = (doc, skip = new Set()) => {
+const effectsOf = (doc, skip = new Set(), made = new Set()) => {
   const main = mainSequence(doc);
   if (!main) return [];
   const effects = [];
   kids(kid(main, NS.p, "childTnLst"), NS.p, "par").forEach((click, group) => {
     for (const ctn of all(click, NS.p, "cTn")) {
-      if (!ctn.getAttribute("presetClass")) continue;
+      if (!ctn.getAttribute("presetClass") || made.has(ctn)) continue;
       const spid = targetOf(ctn);
       if (skip.has(spid)) continue;
       const inner = ancestor(ctn.parentNode, NS.p, "cTn");
@@ -342,7 +362,7 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
     }
     const doc = parse(await zip.file(slide.part).async("string"));
     const narration = new Set(all(doc, NS.p, "cNvPr").filter(isNarration).map((c) => Number(c.getAttribute("id"))));
-    const { timed, fades, spare } = plan(effectsOf(doc, narration), slideCues(slide));
+    const { timed, fades, spare } = plan(effectsOf(doc, narration, madeEntrances(doc)), slideCues(slide));
     const nameOf = (spid) => [...slide.shapes].find(([, id]) => id === spid)?.[0] ?? `shape ${spid}`;
     const uncued = timed.filter((e) => !e.cue && e.ctn.getAttribute("presetClass") !== "mediacall");
     for (const e of uncued) {
@@ -418,6 +438,11 @@ const renumber = (timing) => {
 const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
   const sld = doc.documentElement;
   const spTree = all(doc, NS.p, "spTree")[0];
+  for (const ctn of madeEntrances(doc)) {
+    const build = all(doc, NS.p, "bldP").find((b) => Number(b.getAttribute("spid")) === targetOf(ctn) && b.getAttribute("grpId") === ctn.getAttribute("grpId"));
+    build?.parentNode.removeChild(build);
+    ctn.parentNode.parentNode.removeChild(ctn.parentNode);
+  }
   const old = removeNarration(doc);
   for (const rel of all(rels, NS.rel, "Relationship")) if (old.rids.has(rel.getAttribute("Id"))) rel.parentNode.removeChild(rel);
 
@@ -487,6 +512,7 @@ const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
 
   let bldLst = kid(timing, NS.p, "bldLst");
   const builds = bldLst ? kids(bldLst, NS.p, "bldP") : [];
+  const made = [];
   const placed = [
     ...timed.map((e) => ({ ms: e.ms, node: e.par, ctn: e.ctn })),
     ...fades.map((f) => {
@@ -505,9 +531,14 @@ const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
         bldLst.appendChild(b);
       }
       const ms = Math.max(0, Math.round(f.ms));
-      return { ms, node: fragment(doc, entranceMarkup(f.spid, ms, grpId, (f.effect && effectKey(f.effect)) || "fade"))[0] };
+      const key = (f.effect && effectKey(f.effect)) || "fade";
+      made.push(`${f.spid}/${EFFECTS[key].id}`);
+      return { ms, node: fragment(doc, entranceMarkup(f.spid, ms, grpId, key))[0] };
     }),
   ].sort((a, b) => a.ms - b.ms);
+  if (made.length) {
+    all(doc, NS.p, "cNvPr").find((c) => Number(c.getAttribute("id")) === plays[0].spid).setAttribute("title", `${MADE} ${made.join(" ")}`);
+  }
   for (const { ms, node, ctn } of placed) {
     if (ctn) {
       ctn.setAttribute("nodeType", "withEffect");
