@@ -51,7 +51,7 @@ Alt andet kan stå på No Access. Så kan nøglen kun lave tale og se dine stemm
 <li>Vil du sætte et loft, så skriv et antal credits ud for <strong>Per credit refresh period</strong>.</li>
 <li>Vælg Create Key, kopiér nøglen, og sæt den ind her. ElevenLabs viser den kun én gang.</li>
 </ol>`,
-  license: `<strong>Gratiskontoen er kun til intern brug.</strong> Skal videoen bruges til andet end intern brug, for eksempel til kunder, på en offentlig hjemmeside eller i markedsføring, <strong>skal</strong> du have en betalt ElevenLabs-plan. Er du i tvivl, så vælg en betalt plan, og se <a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">ElevenLabs' planer og vilkår</a>.`,
+  license: `<strong>Gratiskontoen er kun til intern brug.</strong> Skal videoen bruges til andet end intern brug, for eksempel til kunder, på en offentlig hjemmeside eller i markedsføring, <strong>skal</strong> du have en betalt ElevenLabs-plan. Den billigste koster i skrivende stund omkring 6 dollars om måneden for 30.000 credits, hvilket er godt en times tale. Er du i tvivl, så vælg en betalt plan, og se <a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">ElevenLabs' planer og vilkår</a>.`,
   "voices-help-summary": "Danske stemmer",
   "voices-help-body": `<p>En engelsk stemme kan godt tale dansk, men den lyder som en turist. Find en dansk stemme i ElevenLabs:</p>
 <ol>
@@ -166,7 +166,7 @@ Leave everything else on No Access. The key can then only make speech and list y
 <li>To set a ceiling, enter a number of credits next to <strong>Per credit refresh period</strong>.</li>
 <li>Choose Create Key, copy the key and paste it here. ElevenLabs shows it only once.</li>
 </ol>`,
-  license: `<strong>The free plan is for internal use only.</strong> If the video is used for anything other than internal use, such as for customers, on a public website or in marketing, you <strong>must</strong> have a paid ElevenLabs plan. If in doubt, choose a paid plan, and see <a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">ElevenLabs' plans and terms</a>.`,
+  license: `<strong>The free plan is for internal use only.</strong> If the video is used for anything other than internal use, such as for customers, on a public website or in marketing, you <strong>must</strong> have a paid ElevenLabs plan. At the time of writing the cheapest costs about 6 dollars a month for 30,000 credits, a good hour of speech. If in doubt, choose a paid plan, and see <a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">ElevenLabs' plans and terms</a>.`,
   "voices-help-summary": "Voices in other languages",
   "voices-help-body": `<p>Any voice can speak any language, but a voice made for the language sounds far more natural. To find one in ElevenLabs:</p>
 <ol>

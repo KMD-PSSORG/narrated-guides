@@ -283,7 +283,9 @@ There are two ways to run it, sharing the same code (`src/pptx.mjs`):
   Text to Speech (Access) and Voices (Read); the page explains how to make a
   restricted one. ElevenLabs' free plan is for internal use only: a video
   used for anything else, such as for customers, on a public website or in
-  marketing, needs a paid plan. The page says so next to the key. Voices are picked
+  marketing, needs a paid plan. The cheapest, about 6 dollars a month at the
+  time of writing, gives 30,000 credits, a good hour of speech. The page says
+  so next to the key. Voices are picked
   from the key's account, and clips are cached in the browser, so running a
   deck again only voices what changed. The page is in Danish, with a switch
   to English, and has a sample deck in each; the Danish one is a short show
