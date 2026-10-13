@@ -312,3 +312,13 @@ footer a {
   justify-content: space-between;
   align-items: baseline;
 }
+
+.notice {
+  border-left: 4px solid var(--amber);
+  border-radius: 6px;
+  background: var(--amber-bg);
+  color: var(--ink);
+  padding: 10px 14px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}

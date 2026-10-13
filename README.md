@@ -29,6 +29,17 @@ narrated deck that PowerPoint exports to video. See
 - Playwright with Chromium (`npx playwright install chromium`)
 - An ElevenLabs API key, and a voice id for each voice in the video
 
+### ElevenLabs licence
+
+ElevenLabs' free plan is for internal use only. A video made with
+narrated-guides, whether from a manuscript or a deck, that is used for
+anything other than internal use, such as for customers, on a public website
+or in marketing, **must** be voiced on a paid plan. The cheapest, about 6
+dollars a month at the time of writing, gives 30,000 credits. If in doubt,
+use a paid plan. The rule itself is in ElevenLabs'
+[terms of use](https://elevenlabs.io/terms-of-use); the plans are on their
+[pricing page](https://elevenlabs.io/pricing).
+
 ## Install in a project
 
 ```bash
@@ -281,7 +292,8 @@ There are two ways to run it, sharing the same code (`src/pptx.mjs`):
   user's own ElevenLabs key. Nothing is uploaded; the key goes to ElevenLabs
   only, and a Content-Security-Policy allows nothing else. The key needs only
   Text to Speech (Access) and Voices (Read); the page explains how to make a
-  restricted one. Voices are picked
+  restricted one, and states the [licence rule](#elevenlabs-licence) next to
+  the key. Voices are picked
   from the key's account, and clips are cached in the browser, so running a
   deck again only voices what changed. The page is in Danish, with a switch
   to English, and has a sample deck in each; the Danish one is a short show
