@@ -3,7 +3,8 @@
  *
  * Each slide's notes are speak text with the usual `[audio tags]` and cues.
  * `{vis: Shape name}` (or `{show: …}`) names a shape as PowerPoint's Selection
- * Pane shows it; `{voice: name}` (or `{stemme: name}`) hands the rest of the
+ * Pane shows it, and `{vis: Shape name, zoom}` also picks how it comes in when
+ * it has no animation of its own (see EFFECTS); `{voice: name}` (or `{stemme: name}`) hands the rest of the
  * slide's notes to a named voice, and the slide's clips then play one after
  * another.
  *
@@ -11,8 +12,9 @@
  * slide and playing as the slide appears; every animation the slide already
  * has, moved off the clicks and onto the words — a cued shape's animation
  * starts on its word, the rest of its click group keeps its place relative to
- * it, and a click group without cues plays with the one before; a fade-in for
- * a cued shape that had no animation; and an automatic advance when the audio
+ * it, and a click group without cues plays with the one before; an entrance
+ * (a fade unless the cue picks another) for a cued shape that had no
+ * animation; and an automatic advance when the audio
  * ends. PowerPoint then exports the video itself. Running it again on a
  * narrated deck replaces the narration rather than adding a second one.
  *
@@ -40,7 +42,50 @@ const PIXEL = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfD
 const VOICE = /\{(?:voice|stemme):\s*([\p{L}\p{N}_-]+)\s*\}/iu;
 const VERBS = { vis: "vis", show: "vis" };
 const DECLARATION = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
-const FADE_MS = 500;
+
+const onShape = (spid) => `<p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl>`;
+const value = (v) => (typeof v === "number" ? `<p:fltVal val="${v}"/>` : `<p:strVal val="${v}"/>`);
+const anim = (attr, from, to) => (spid, dur) =>
+  `<p:anim calcmode="lin" valueType="num"><p:cBhvr><p:cTn id="0" dur="${dur}" fill="hold"/>${onShape(spid)}<p:attrNameLst><p:attrName>${attr}</p:attrName></p:attrNameLst></p:cBhvr><p:tavLst><p:tav tm="0"><p:val>${value(from)}</p:val></p:tav><p:tav tm="100000"><p:val>${value(to)}</p:val></p:tav></p:tavLst></p:anim>`;
+const filter = (name) => (spid, dur) =>
+  `<p:animEffect transition="in" filter="${name}"><p:cBhvr><p:cTn id="0" dur="${dur}"/>${onShape(spid)}</p:cBhvr></p:animEffect>`;
+const fly = (x, y) => [anim("ppt_x", x, "#ppt_x"), anim("ppt_y", y, "#ppt_y")];
+
+/**
+ * Entrances a cue can pick for a shape without an animation of its own, as
+ * PowerPoint writes them: preset id and subtype (so its Animation Pane names
+ * them), duration in ms, whether they ease out, and their behaviours.
+ */
+export const EFFECTS = {
+  fade: { id: 10, sub: 0, dur: 500, parts: [filter("fade")] },
+  appear: { id: 1, sub: 0, dur: 0, parts: [] },
+  zoom: { id: 53, sub: 16, dur: 500, parts: [anim("ppt_w", 0, "#ppt_w"), anim("ppt_h", 0, "#ppt_h"), filter("fade")] },
+  float: { id: 42, sub: 0, dur: 1000, ease: true, parts: [filter("fade"), ...fly("#ppt_x", "#ppt_y+0.1")] },
+  fly: { id: 2, sub: 4, dur: 500, ease: true, parts: fly("#ppt_x", "1+#ppt_h/2") },
+  "fly-left": { id: 2, sub: 8, dur: 500, ease: true, parts: fly("0-#ppt_w/2", "#ppt_y") },
+  "fly-right": { id: 2, sub: 2, dur: 500, ease: true, parts: fly("1+#ppt_w/2", "#ppt_y") },
+  "fly-top": { id: 2, sub: 1, dur: 500, ease: true, parts: fly("#ppt_x", "0-#ppt_h/2") },
+  wipe: { id: 22, sub: 8, dur: 500, parts: [filter("wipe(left)")] },
+  grow: { id: 31, sub: 0, dur: 500, parts: [anim("ppt_w", 0, "#ppt_w"), anim("ppt_h", 0, "#ppt_h"), anim("style.rotation", 90, 0), filter("fade")] },
+};
+
+/** What a cue may call each effect: its Danish and English name, and others. */
+const EFFECT_NAMES = {
+  fade: { da: "tone", en: "fade", also: ["udtoning"] },
+  appear: { da: "straks", en: "appear", also: [] },
+  zoom: { da: "zoom", en: "zoom", also: [] },
+  float: { da: "svæv", en: "float", also: ["float in", "flyd ind"] },
+  fly: { da: "fly", en: "fly", also: ["fly in", "flyv", "flyv ind", "fly op", "fly up"] },
+  "fly-left": { da: "fly venstre", en: "fly left", also: ["flyv fra venstre", "fra venstre"] },
+  "fly-right": { da: "fly højre", en: "fly right", also: ["flyv fra højre", "fra højre"] },
+  "fly-top": { da: "fly top", en: "fly top", also: ["fly ned", "fly down", "flyv fra toppen", "fra toppen"] },
+  wipe: { da: "visk", en: "wipe", also: ["visk ud"] },
+  grow: { da: "voks", en: "grow", also: ["voks og drej", "grow and turn"] },
+};
+const EFFECT_BY_NAME = new Map(Object.entries(EFFECT_NAMES).flatMap(([key, n]) => [n.da, n.en, ...n.also].map((name) => [name, key])));
+const effectKey = (name) => EFFECT_BY_NAME.get(name.toLowerCase().replace(/\s+/g, " ")) ?? null;
+/** The effect names to show, in "da" or "en". */
+export const effectNames = (lang) => [...new Set(Object.values(EFFECT_NAMES).map((n) => n[lang]))].join(", ");
 
 let xml;
 const xmlTools = async () => {
@@ -139,7 +184,11 @@ const segmentsOf = (notes) => {
     segments.push({
       voice: parts[i - 1] ?? null,
       text,
-      cues: cues.map((c) => ({ ...c, verb: VERBS[c.verb.toLowerCase()] ?? c.verb })),
+      cues: cues.map((c) => {
+        const verb = VERBS[c.verb.toLowerCase()] ?? c.verb;
+        const picked = c.target.match(/^(.*?)\s*,\s*([^,]+?)\s*$/);
+        return picked ? { ...c, verb, target: picked[1], effect: picked[2] } : { ...c, verb };
+      }),
     });
   }
   return segments;
@@ -179,6 +228,8 @@ export const MESSAGES = {
   "uncued-with": ({ shape, leader }) => `the animation on "${shape}" has no cue, so it plays along with "${leader}".`,
   "uncued-before": ({ shape }) => `the animation on "${shape}" has no cue, so it plays with the step before it.`,
   "spare-cue": ({ shape }) => `"${shape}" has more cues than animations; the extra cue does nothing.`,
+  "unknown-effect": ({ effect, shape }) => `"${effect}" is not an effect, so "${shape}" fades in. The effects are: ${effectNames("en")}.`,
+  "effect-kept": ({ effect, shape }) => `"${shape}" already has an animation, which is used instead of "${effect}".`,
   "word-count": ({ timed, expected }) => `the voice timed ${timed} words, the notes hold ${expected}; cues are matched by position.`,
 };
 
@@ -259,7 +310,7 @@ const slideCues = (slide) =>
       .filter((c) => c.verb === "vis")
       .map((c) => ({ ...c, name: findShape(slide.shapes, c.target) }))
       .filter((c) => c.name)
-      .map((c) => ({ spid: slide.shapes.get(c.name), ms: null, name: c.name })),
+      .map((c) => ({ spid: slide.shapes.get(c.name), ms: null, name: c.name, effect: c.effect })),
   );
 
 /**
@@ -281,8 +332,11 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
           warnings.push(note(at, "unknown-verb", { verb: cue.verb }));
         } else if (!findShape(slide.shapes, cue.target)) {
           problems.push(note(at, "no-shape", { target: cue.target, shapes: [...slide.shapes.keys()].join(", ") }));
-        } else if (slide.twice.has(findShape(slide.shapes, cue.target))) {
-          warnings.push(note(at, "twice", { target: cue.target }));
+        } else {
+          if (slide.twice.has(findShape(slide.shapes, cue.target))) warnings.push(note(at, "twice", { target: cue.target }));
+          if (cue.effect && !effectKey(cue.effect)) {
+            warnings.push(note(at, "unknown-effect", { effect: cue.effect, shape: findShape(slide.shapes, cue.target) }));
+          }
         }
       }
     }
@@ -300,6 +354,7 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
       );
     }
     for (const cue of spare) warnings.push(note(at, "spare-cue", { shape: cue.name }));
+    for (const e of timed) if (e.cue?.effect) warnings.push(note(at, "effect-kept", { effect: e.cue.effect, shape: e.cue.name }));
   }
   const characters = deck.segments.reduce((n, s) => n + s.text.length, 0);
   return { problems, warnings, characters };
@@ -307,7 +362,10 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
 
 // --- writing ---
 
-const fadeMarkup = (spid, ms, grpId) => `<p:par><p:cTn id="0" presetID="10" presetClass="entr" presetSubtype="0" fill="hold" grpId="${grpId}" nodeType="withEffect"><p:stCondLst><p:cond delay="${ms}"/></p:stCondLst><p:childTnLst><p:set><p:cBhvr><p:cTn id="0" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn><p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set><p:animEffect transition="in" filter="fade"><p:cBhvr><p:cTn id="0" dur="${FADE_MS}"/><p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl></p:cBhvr></p:animEffect></p:childTnLst></p:cTn></p:par>`;
+const entranceMarkup = (spid, ms, grpId, key) => {
+  const { id, sub, dur, ease, parts } = EFFECTS[key];
+  return `<p:par><p:cTn id="0" presetID="${id}" presetClass="entr" presetSubtype="${sub}"${ease ? ' decel="100000"' : ""} fill="hold" grpId="${grpId}" nodeType="withEffect"><p:stCondLst><p:cond delay="${ms}"/></p:stCondLst><p:childTnLst><p:set><p:cBhvr><p:cTn id="0" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>${onShape(spid)}<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>${parts.map((part) => part(spid, dur)).join("")}</p:childTnLst></p:cTn></p:par>`;
+};
 
 const playMarkup = (spid, ms, durMs) => `<p:par><p:cTn id="0" presetID="1" presetClass="mediacall" presetSubtype="0" fill="hold" nodeType="withEffect"><p:stCondLst><p:cond delay="${ms}"/></p:stCondLst><p:childTnLst><p:cmd type="call" cmd="playFrom(0.0)"><p:cBhvr><p:cTn id="0" dur="${durMs}" fill="hold"/><p:tgtEl><p:spTgt spid="${spid}"/></p:tgtEl></p:cBhvr></p:cmd></p:childTnLst></p:cTn></p:par>`;
 
@@ -398,7 +456,7 @@ const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
     plays.push({ spid, ms: offset, durMs: clip.durMs });
     for (const cue of clip.cues) {
       const name = findShape(slide.shapes, cue.target);
-      if (cue.verb === "vis" && name) cues.push({ spid: slide.shapes.get(name), ms: offset + cue.at * 1000 - leadMs, name });
+      if (cue.verb === "vis" && name) cues.push({ spid: slide.shapes.get(name), ms: offset + cue.at * 1000 - leadMs, name, effect: cue.effect });
     }
     offset += clip.durMs + gapMs;
   });
@@ -445,7 +503,8 @@ const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
         b.setAttribute("animBg", "1");
         bldLst.appendChild(b);
       }
-      return { ms: Math.max(0, Math.round(f.ms)), node: fragment(doc, fadeMarkup(f.spid, Math.max(0, Math.round(f.ms)), grpId))[0] };
+      const ms = Math.max(0, Math.round(f.ms));
+      return { ms, node: fragment(doc, entranceMarkup(f.spid, ms, grpId, (f.effect && effectKey(f.effect)) || "fade"))[0] };
     }),
   ].sort((a, b) => a.ms - b.ms);
   for (const { ms, node, ctn } of placed) {
@@ -474,7 +533,7 @@ const narrateSlide = (doc, rels, slide, clips, { leadMs, gapMs, tailMs }) => {
     clips: plays.map((p) => p.ms),
     effects: [
       ...timed.map((e) => ({ spid: e.spid, ms: e.ms, cued: Boolean(e.cue), kind: e.ctn.getAttribute("presetClass") })),
-      ...fades.map((f) => ({ spid: f.spid, ms: Math.max(0, Math.round(f.ms)), cued: true, kind: "fade" })),
+      ...fades.map((f) => ({ spid: f.spid, ms: Math.max(0, Math.round(f.ms)), cued: true, kind: (f.effect && effectKey(f.effect)) || "fade" })),
     ].sort((a, b) => a.ms - b.ms),
   };
 };

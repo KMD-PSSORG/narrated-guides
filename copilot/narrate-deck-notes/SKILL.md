@@ -19,6 +19,7 @@ The notes are exactly what one voice says, in the order it says it. Nothing else
 
 - **Spoken prose only.** No bullets, headings, slide titles, URLs or "on this slide we see". Talk to the viewer. Write numbers and abbreviations the way they are said: "two hundred characters", "the HR team", "version three".
 - **`{vis: Shape name}`** makes that shape appear on the word right after the cue. Put it directly before the word that introduces the thing, not at the start of the sentence: `First, {vis: Phase 1} you find the item.` The name must match the Selection Pane exactly. `{show: Shape name}` means the same.
+- **An effect after a comma** chooses how a shape without an animation of its own comes in: `{vis: Phase 1, fly left}`. Without one it fades in. The effects, in Danish and English: tone/fade, straks/appear, zoom, svæv/float, fly (from below), fly venstre/fly left, fly højre/fly right, fly top, visk/wipe, voks/grow. Pick them with taste: one effect for a row of similar shapes (`fly venstre` along a timeline, `svæv` for text), `zoom` or `voks` for the one thing that should stand out, and never a different effect on every shape. If the shape already has an animation in PowerPoint, that one is kept and the effect is ignored.
   - If the shape already has an animation, that animation is used and moved onto the word; shapes animated in the same click ("With Previous", "After Previous") come along by themselves, so they need no cue of their own.
   - A shape without an animation fades in. Shapes that should be visible from the start need no cue.
   - One cue per thing that appears, in the order they should appear.
@@ -47,7 +48,7 @@ A requisition goes through three phases. {vis: Phase 1} First, you find the item
 The same in Danish, with phases named "Fase 1", "Fase 2" and "Fase 3":
 
 ```
-En indkøbsrekvisition går gennem tre faser. {vis: Fase 1} Først finder du varen i kataloget. [pauses] {vis: Fase 2} Så udfylder du detaljerne: omkostningssted, budget og en kort begrundelse. [pauses] {vis: Fase 3} Og til sidst bliver den godkendt. {stemme: godkender} [deadpan] På et tidspunkt.
+En indkøbsrekvisition går gennem tre faser. {vis: Fase 1, fly venstre} Først finder du varen i kataloget. [pauses] {vis: Fase 2, fly venstre} Så udfylder du detaljerne: omkostningssted, budget og en kort begrundelse. [pauses] {vis: Fase 3, fly venstre} Og til sidst bliver den godkendt. {stemme: godkender} [deadpan] På et tidspunkt.
 ```
 
 ## Do not

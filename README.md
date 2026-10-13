@@ -249,6 +249,11 @@ A requisition goes through three phases. {vis: Phase 1} First, you find the item
 
 - `{vis: Phase 1}` (or `{show: …}`) makes the shape called “Phase 1” appear on
   the next word. The name is the one in PowerPoint's Selection Pane.
+  `{vis: Phase 1, zoom}` also picks how a shape without an animation comes
+  in: fade (the default), appear, zoom, float, fly (from below), fly left, fly
+  right, fly top, wipe or grow, or their Danish names (tone, straks, zoom,
+  svæv, fly, fly venstre, fly højre, fly top, visk, voks). A shape that
+  already has an animation keeps it.
 - `{voice: bent}` (or `{stemme: bent}`) hands the rest of the slide to a named
   voice. The slide's clips play one after another.
 
@@ -262,7 +267,8 @@ The narrated copy of the deck has, on every slide with notes:
   shape's animation starts on its word. The rest of its click group (“With
   Previous”, “After Previous”) keeps its place relative to it. A click group
   without cues plays with the one before;
-- a fade-in for a cued shape that had no animation;
+- an entrance for a cued shape that had no animation: the one its cue picks,
+  or a fade;
 - an automatic advance when the audio ends.
 
 PowerPoint then makes the video: File → Export → Create a Video, with

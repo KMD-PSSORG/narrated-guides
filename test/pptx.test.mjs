@@ -70,14 +70,15 @@ describe("openDeck", () => {
   });
 });
 
-/** The fixture with slide 3's notes replaced. */
-const withNotes3 = async (text) => {
-  const zip = await JSZip.loadAsync(fixture("plain"));
-  const part = "ppt/notesSlides/notesSlide3.xml";
+/** A fixture with one slide's notes replaced. */
+const withNotes = async (name, slide, text) => {
+  const zip = await JSZip.loadAsync(fixture(name));
+  const part = `ppt/notesSlides/notesSlide${slide}.xml`;
   const xml = await zip.file(part).async("string");
   zip.file(part, xml.replace(/(<p:ph type="body"[\s\S]*?<a:t>)[^<]*(<\/a:t>)/, `$1${text}$2`));
   return zip.generateAsync({ type: "uint8array" });
 };
+const withNotes3 = (text) => withNotes("plain", 3, text);
 
 describe("Danish notes", () => {
   it("takes {stemme: …} and voice names with æ, ø and å", async () => {
@@ -99,6 +100,37 @@ describe("Danish notes", () => {
     assert.deepEqual(problems.map((p) => p.code), ["no-shape", "voice-missing"]);
     assert.equal(problems[0].params.target, "Pointe");
     assert.deepEqual(problems[1].params, { voice: "bjørn" });
+  });
+});
+
+describe("picked effects", () => {
+  const presetOf = (doc, spid) =>
+    els(doc, "cTn").find((c) => c.getAttribute("presetClass") === "entr" && c.getElementsByTagNameNS(P, "spTgt")[0]?.getAttribute("spid") === spid);
+
+  it("brings a shape in with the effect its cue names, in Danish or English", async () => {
+    for (const [name, id, sub] of [["zoom", "53", "16"], ["svæv", "42", "0"], ["Fly venstre", "2", "8"], ["grow", "31", "0"]]) {
+      const deck = await openDeck(await withNotes3(`Det var processen. {vis: Punchline, ${name}} Spørgsmål?`));
+      const { bytes, report } = await narrateDeck(deck, clipsFor(deck));
+      const spid = String(deck.slides[2].shapes.get("Punchline"));
+      const ctn = presetOf(await slideXml(bytes, 3), spid);
+      assert.deepEqual([ctn.getAttribute("presetID"), ctn.getAttribute("presetSubtype")], [id, sub], name);
+      assert.notEqual(report.find((r) => r.slide === 3).effects.find((e) => e.spid === Number(spid)).kind, "fade");
+    }
+  });
+
+  it("fades in, with a warning, when the effect is not one it knows", async () => {
+    const deck = await openDeck(await withNotes3("{vis: Punchline, kaboom} Spørgsmål?"));
+    const { warnings } = await checkDeck(deck);
+    assert.deepEqual(warnings.map((w) => [w.code, w.params.effect, w.params.shape]), [["unknown-effect", "kaboom", "Punchline"]]);
+    assert.match(warnings[0].message, /The effects are: fade, appear, zoom/);
+    const { bytes } = await narrateDeck(deck, clipsFor(deck));
+    assert.equal(presetOf(await slideXml(bytes, 3), String(deck.slides[2].shapes.get("Punchline"))).getAttribute("presetID"), "10");
+  });
+
+  it("keeps an animation made in PowerPoint and says so", async () => {
+    const deck = await openDeck(await withNotes("animated", 2, "Tre faser. {vis: Phase 1, zoom} Først."));
+    const { warnings } = await checkDeck(deck);
+    assert.ok(warnings.some((w) => w.code === "effect-kept" && w.params.shape === "Phase 1" && w.params.effect === "zoom"));
   });
 });
 
