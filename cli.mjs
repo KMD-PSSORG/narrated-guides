@@ -6,13 +6,17 @@
  *   preview <video>           the voice as one mp3 to listen to
  *   assemble <video> [name]   recording + voice → <name>.mp4 and <name>.srt
  *   frames <video> [name]     a still at every cue, for review
+ *   pptx <deck.pptx> [--dry | --say]
+ *                             narrate a deck from its speaker notes → <deck>-narrated.pptx
  *
  * Recording is the project's own script, which calls record() from this package.
  */
 import { assemble, frames, loadConfig, preview, voiceManuscript } from "./src/index.mjs";
+import { narratePptxFile } from "./src/pptx-file.mjs";
 
-const [command, first, second] = process.argv.slice(2);
-const usage = "usage: narrated-guides tts <manuscript> | preview <video> | assemble <video> [name] | frames <video> [name]";
+const [command, first, ...rest] = process.argv.slice(2);
+const usage =
+  "usage: narrated-guides tts <manuscript> | preview <video> | assemble <video> [name] | frames <video> [name] | pptx <deck.pptx> [--dry | --say]";
 
 const main = async () => {
   if (!command || !first) throw new Error(usage);
@@ -25,9 +29,11 @@ const main = async () => {
     case "preview":
       return preview(config, first);
     case "assemble":
-      return assemble(config, first, second);
+      return assemble(config, first, rest[0]);
     case "frames":
-      return frames(config, first, second);
+      return frames(config, first, rest[0]);
+    case "pptx":
+      return narratePptxFile(config, first, { dry: rest.includes("--dry"), say: rest.includes("--say") });
     default:
       throw new Error(usage);
   }

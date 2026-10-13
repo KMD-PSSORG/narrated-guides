@@ -21,6 +21,14 @@ manuscript or a recording script.
 The voice comes first and the picture follows it. Never time anything by
 guessing how long a sentence takes.
 
+When the source is a PowerPoint deck rather than a web app, use the deck
+track instead: the speaker notes are the manuscript (`{vis: Shape name}`,
+`{voice: name}`), `npx narrated-guides pptx deck.pptx --dry` checks it, and
+`npx narrated-guides pptx deck.pptx` writes the narrated deck that PowerPoint
+exports to video. The same stops apply: the notes are approved before any
+characters are spent. For people without a terminal, point them to the page
+in `web/pptx/` and to the Copilot skill in `copilot/narrate-deck-notes/`.
+
 ## Stops: wait for the human at each one
 
 Each stop costs something to undo: ElevenLabs characters, recording time, or

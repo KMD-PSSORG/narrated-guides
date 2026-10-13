@@ -1,9 +1,12 @@
 export { assemble } from "./assemble.mjs";
 export { CONFIG_FILE, loadConfig, readVoiceSecrets, resolveConfig } from "./config.mjs";
-export { parseManuscript, readManuscript, spokenWords } from "./manuscript.mjs";
+export { parseManuscript, spokenWords, splitCues } from "./manuscript.mjs";
 export { record, sleep } from "./recorder.mjs";
 export { frames, preview } from "./review.mjs";
 export { DEFAULT_LABELS, DEFAULT_THEME, createStage, phaseOfStep } from "./stage.mjs";
 export { stamp, subtitleCues, toSrt, twoLines } from "./subtitles.mjs";
 export { DEFAULT_LEADS, anchorCues, cueDue, wordsFromCharacters } from "./timing.mjs";
-export { manuscriptPath, voiceManuscript } from "./tts.mjs";
+export { manuscriptPath, readManuscript, voiceManuscript } from "./tts.mjs";
+export { listVoices, withTimestamps } from "./eleven.mjs";
+export { mp3Duration } from "./mp3.mjs";
+export { checkDeck, narrateDeck, openDeck } from "./pptx.mjs";

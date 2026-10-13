@@ -8,9 +8,9 @@
  * A cue is anchored to the spoken word right after it, counted among the words
  * the voice actually says — audio tags excluded. The recorder later looks that
  * word up in the audio's timestamps.
+ *
+ * Pure text handling, so it also runs in a browser.
  */
-import { readFileSync } from "node:fs";
-
 const SCENE = /^## Scene (\d+) · (.+)$/;
 const SPEAK = /^```speak(?:\s+([\w-]+))?\s*$/;
 const CUE = /\{(\p{L}+):\s*([^}]+)\}/gu;
@@ -22,7 +22,8 @@ export const spokenWords = (text) =>
     .split(/\s+/)
     .filter((word) => word && !TAG.test(word));
 
-const splitCues = (raw) => {
+/** Speak text without its cues, and the cues with the index of their word. */
+export const splitCues = (raw) => {
   const cues = [];
   let text = "";
   let last = 0;
@@ -74,5 +75,3 @@ export const parseManuscript = (source) => {
   }
   return scenes;
 };
-
-export const readManuscript = (file) => parseManuscript(readFileSync(file, "utf8"));

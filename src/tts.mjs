@@ -17,36 +17,11 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { readVoiceSecrets } from "./config.mjs";
-import { readManuscript } from "./manuscript.mjs";
-import { anchorCues, wordsFromCharacters } from "./timing.mjs";
+import { API, failure, withTimestamps } from "./eleven.mjs";
+import { parseManuscript } from "./manuscript.mjs";
+import { anchorCues } from "./timing.mjs";
 
-const API = "https://api.elevenlabs.io/v1";
-
-const failure = async (response, what) => {
-  const body = await response.text();
-  return new Error(`${what}: HTTP ${response.status} ${body.slice(0, 300)}`);
-};
-
-const withTimestamps = async ({ key, voice, model, format }, text) => {
-  const response = await fetch(`${API}/text-to-speech/${voice}/with-timestamps?output_format=${format}`, {
-    method: "POST",
-    headers: { "xi-api-key": key, "content-type": "application/json" },
-    body: JSON.stringify({ text, model_id: model }),
-  });
-  if (!response.ok) throw await failure(response, "text-to-speech/with-timestamps");
-  const body = await response.json();
-  const alignment = body.alignment ?? body.normalized_alignment;
-  return {
-    audio: Buffer.from(body.audio_base64, "base64"),
-    words: alignment
-      ? wordsFromCharacters(
-          alignment.characters,
-          alignment.character_start_times_seconds,
-          alignment.character_end_times_seconds,
-        )
-      : null,
-  };
-};
+export const readManuscript = (file) => parseManuscript(readFileSync(file, "utf8"));
 
 const plain = async ({ key, voice, model, format }, text) => {
   const response = await fetch(`${API}/text-to-speech/${voice}?output_format=${format}`, {
@@ -72,7 +47,7 @@ const forcedAlignment = async ({ key }, audio, text) => {
   return body.words.map((w) => ({ text: w.text.trim(), start: w.start, end: w.end })).filter((w) => w.text);
 };
 
-const voiceScene = async (voice, scene) => {
+export const voiceScene = async (voice, scene) => {
   try {
     const { audio, words } = await withTimestamps(voice, scene.text);
     if (words) return { audio, words, timing: "with-timestamps" };
