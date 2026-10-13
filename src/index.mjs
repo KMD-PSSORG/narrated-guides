@@ -9,4 +9,4 @@ export { DEFAULT_LEADS, anchorCues, cueDue, wordsFromCharacters } from "./timing
 export { manuscriptPath, readManuscript, voiceManuscript } from "./tts.mjs";
 export { listVoices, withTimestamps } from "./eleven.mjs";
 export { mp3Duration } from "./mp3.mjs";
-export { MESSAGES, checkDeck, narrateDeck, openDeck } from "./pptx.mjs";
+export { EFFECTS, MESSAGES, checkDeck, effectNames, narrateDeck, openDeck } from "./pptx.mjs";

@@ -1,6 +1,6 @@
 // The page's words in Danish and English. Static text is keyed by the
 // data-i18n attribute on its element; the rest are functions called by app.mjs.
-import { MESSAGES } from "../../src/pptx.mjs";
+import { MESSAGES, effectNames } from "../../src/pptx.mjs";
 
 const da = {
   title: "Præsentationer der fortæller sig selv · narrated-guides",
@@ -9,7 +9,7 @@ const da = {
   privacy: "Det hele sker i din browser. Præsentationen bliver ikke uploadet nogen steder, og din ElevenLabs-nøgle sendes kun til ElevenLabs sammen med teksten fra noterne.",
   s1: "Din præsentation",
   drop: "<strong>Træk en .pptx herind</strong> eller klik for at vælge en",
-  sample: 'Har du ikke en ved hånden? <button type="button" class="link" id="sample">Prøv eksemplet</button>, en tidslinje i tre faser med en ekstra stemme.',
+  sample: 'Har du ikke en ved hånden? <button type="button" class="link" id="sample">Prøv eksemplet</button>: en marketingekspert, der viser alle effekterne, mens fortælleren prøver at komme til orde.',
   "help-notes-summary": "Sådan skriver du noterne",
   "help-notes-body": `<p>Skriv i noterne, hvad stemmen skal sige på det slide. Slides uden noter bliver ikke rørt.</p>
 <pre>En indkøbsrekvisition går gennem tre faser.
@@ -19,6 +19,7 @@ const da = {
 <ul>
 <li><code>{vis: Fase 1}</code> får figuren “Fase 1” frem på det næste ord. Navnet er det, der står i markeringsruden (Hjem → Arranger → Markeringsrude), hvor du også kan omdøbe figurer.</li>
 <li>Har figuren allerede en animation, bruges den og flyttes til ordet. Figurer i samme klik (“Med forrige” og “Efter forrige”) følger med. En figur uden animation toner frem.</li>
+<li>Skriv en effekt efter et komma for at vælge, hvordan en figur uden animation kommer ind: <code>{vis: Fase 1, zoom}</code>. Effekterne er ${effectNames("da")}.</li>
 <li><code>{stemme: bent}</code> lader en anden stemme sige resten af slidet. Du vælger stemmen nedenfor. <code>{voice: …}</code> virker også.</li>
 <li><code>[pauses]</code>, <code>[deadpan]</code> og andre ord i firkantede parenteser fortæller stemmen, hvordan den skal sige det. De læses ikke op. Skriv dem på engelsk, også i danske noter.</li>
 <li>Skriv tal, datoer og forkortelser, som de siges: “for eksempel”, “fem hundrede kroner”, “K M D”.</li>
@@ -111,6 +112,8 @@ Alt andet kan stå på No Access. Så kan nøglen kun lave tale og se dine stemm
     "uncued-with": ({ shape, leader }) => `animationen på “${shape}” har ingen cue, så den kører sammen med “${leader}”.`,
     "uncued-before": ({ shape }) => `animationen på “${shape}” har ingen cue, så den kører sammen med trinnet før.`,
     "spare-cue": ({ shape }) => `“${shape}” har flere cues end animationer; den ekstra cue gør ingenting.`,
+    "unknown-effect": ({ effect, shape }) => `“${effect}” er ikke en effekt, så “${shape}” toner frem. Effekterne er: ${effectNames("da")}.`,
+    "effect-kept": ({ effect, shape }) => `“${shape}” har allerede en animation, og den bruges i stedet for “${effect}”.`,
     "word-count": ({ timed, expected }) => `stemmen gav tider for ${timed} ord, noterne har ${expected}; cues bliver matchet efter placering.`,
   },
 };
@@ -132,6 +135,7 @@ const en = {
 <ul>
 <li><code>{vis: Phase 1}</code> makes the shape called “Phase 1” appear on the next word. <code>{show: …}</code> works too. The name is the one in the Selection Pane (Home → Arrange → Selection Pane), where you can also rename shapes.</li>
 <li>If the shape already has an animation, that animation is used and moved onto the word. Shapes in the same click (“With Previous” and “After Previous”) come along. A shape without an animation fades in.</li>
+<li>Add an effect after a comma to choose how a shape without an animation comes in: <code>{vis: Phase 1, zoom}</code>. The effects are ${effectNames("en")}.</li>
 <li><code>{voice: bent}</code> lets another voice say the rest of the slide. You pick the voice below.</li>
 <li><code>[pauses]</code>, <code>[deadpan]</code> and other words in square brackets tell the voice how to say it. They are not read aloud.</li>
 </ul>`,

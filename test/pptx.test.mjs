@@ -70,14 +70,19 @@ describe("openDeck", () => {
   });
 });
 
-/** The fixture with slide 3's notes replaced. */
-const withNotes3 = async (text) => {
-  const zip = await JSZip.loadAsync(fixture("plain"));
-  const part = "ppt/notesSlides/notesSlide3.xml";
+/** A fixture with one slide's notes replaced. */
+const withNotes = async (name, slide, text, rename = null) => {
+  const zip = await JSZip.loadAsync(fixture(name));
+  if (rename) {
+    const part = `ppt/slides/slide${slide}.xml`;
+    zip.file(part, (await zip.file(part).async("string")).replace(`name="${rename[0]}"`, `name="${rename[1]}"`));
+  }
+  const part = `ppt/notesSlides/notesSlide${slide}.xml`;
   const xml = await zip.file(part).async("string");
   zip.file(part, xml.replace(/(<p:ph type="body"[\s\S]*?<a:t>)[^<]*(<\/a:t>)/, `$1${text}$2`));
   return zip.generateAsync({ type: "uint8array" });
 };
+const withNotes3 = (text) => withNotes("plain", 3, text);
 
 describe("Danish notes", () => {
   it("takes {stemme: …} and voice names with æ, ø and å", async () => {
@@ -99,6 +104,78 @@ describe("Danish notes", () => {
     assert.deepEqual(problems.map((p) => p.code), ["no-shape", "voice-missing"]);
     assert.equal(problems[0].params.target, "Pointe");
     assert.deepEqual(problems[1].params, { voice: "bjørn" });
+  });
+});
+
+describe("picked effects", () => {
+  const presetOf = (doc, spid) =>
+    els(doc, "cTn").find((c) => c.getAttribute("presetClass") === "entr" && c.getElementsByTagNameNS(P, "spTgt")[0]?.getAttribute("spid") === spid);
+
+  it("brings a shape in with the effect its cue names, in Danish or English", async () => {
+    for (const [name, id, sub] of [
+      ["straks", "1", "0"],
+      ["zoom", "53", "16"],
+      ["svæv", "42", "0"],
+      ["fly", "2", "4"],
+      ["Fly venstre", "2", "8"],
+      ["fly right", "2", "2"],
+      ["fly top", "2", "1"],
+      ["wipe", "22", "8"],
+      ["voks", "31", "0"],
+    ]) {
+      const deck = await openDeck(await withNotes3(`Det var processen. {vis: Punchline, ${name}} Spørgsmål?`));
+      const { bytes, report } = await narrateDeck(deck, clipsFor(deck));
+      const spid = String(deck.slides[2].shapes.get("Punchline"));
+      const ctn = presetOf(await slideXml(bytes, 3), spid);
+      assert.deepEqual([ctn.getAttribute("presetID"), ctn.getAttribute("presetSubtype")], [id, sub], name);
+      assert.notEqual(report.find((r) => r.slide === 3).effects.find((e) => e.spid === Number(spid)).kind, "fade");
+    }
+  });
+
+  it("fades in, with a warning, when the effect is not one it knows", async () => {
+    const deck = await openDeck(await withNotes3("{vis: Punchline, kaboom} Spørgsmål?"));
+    const { warnings } = await checkDeck(deck);
+    assert.deepEqual(warnings.map((w) => [w.code, w.params.effect, w.params.shape]), [["unknown-effect", "kaboom", "Punchline"]]);
+    assert.match(warnings[0].message, /The effects are: fade, appear, zoom/);
+    const { bytes } = await narrateDeck(deck, clipsFor(deck));
+    assert.equal(presetOf(await slideXml(bytes, 3), String(deck.slides[2].shapes.get("Punchline"))).getAttribute("presetID"), "10");
+  });
+
+  it("takes a shape whose name has a comma as that shape, not as an effect", async () => {
+    const deck = await openDeck(await withNotes("plain", 3, "{vis: Punchline, FY26} Spørgsmål?", ["Punchline", "Punchline, FY26"]));
+    const cue = deck.slides[2].segments[0].cues[0];
+    assert.deepEqual([cue.target, cue.effect], ["Punchline, FY26", undefined]);
+    const { problems, warnings } = await checkDeck(deck);
+    assert.deepEqual([problems, warnings], [[], []]);
+  });
+
+  it("says only that the animation is kept when an animated shape names an unknown effect", async () => {
+    const deck = await openDeck(await withNotes("animated", 2, "Tre faser. {vis: Phase 1, kaboom} Først."));
+    const codes = (await checkDeck(deck)).warnings.map((w) => w.code);
+    assert.ok(codes.includes("effect-kept"));
+    assert.ok(!codes.includes("unknown-effect"));
+  });
+
+  it("replaces the entrances it made when a narrated deck is narrated again", async () => {
+    const spidOf = (deck) => String(deck.slides[2].shapes.get("Punchline"));
+    const first = await openDeck(await withNotes3("{vis: Punchline, zoom} Spørgsmål?"));
+    const once = await narrateDeck(first, clipsFor(first));
+    const zip = await JSZip.loadAsync(once.bytes);
+    const part = "ppt/notesSlides/notesSlide3.xml";
+    zip.file(part, (await zip.file(part).async("string")).replace("{vis: Punchline, zoom}", "{vis: Punchline, wipe}"));
+    const second = await openDeck(await zip.generateAsync({ type: "uint8array" }));
+    assert.deepEqual((await checkDeck(second)).warnings, []);
+    const twice = await narrateDeck(second, clipsFor(second));
+    const doc = await slideXml(twice.bytes, 3);
+    const entrances = els(doc, "cTn").filter((c) => c.getAttribute("presetClass") === "entr" && c.getElementsByTagNameNS(P, "spTgt")[0]?.getAttribute("spid") === spidOf(second));
+    assert.deepEqual(entrances.map((c) => c.getAttribute("presetID")), ["22"]);
+    assert.equal(els(doc, "bldP").filter((b) => b.getAttribute("spid") === spidOf(second)).length, 1);
+  });
+
+  it("keeps an animation made in PowerPoint and says so", async () => {
+    const deck = await openDeck(await withNotes("animated", 2, "Tre faser. {vis: Phase 1, zoom} Først."));
+    const { warnings } = await checkDeck(deck);
+    assert.ok(warnings.some((w) => w.code === "effect-kept" && w.params.shape === "Phase 1" && w.params.effect === "zoom"));
   });
 });
 
