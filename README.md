@@ -249,8 +249,11 @@ A requisition goes through three phases. {vis: Phase 1} First, you find the item
 
 - `{vis: Phase 1}` (or `{show: …}`) makes the shape called “Phase 1” appear on
   the next word. The name is the one in PowerPoint's Selection Pane.
-- `{voice: bent}` hands the rest of the slide to a named voice. The slide's
-  clips play one after another.
+- `{voice: bent}` (or `{stemme: bent}`) hands the rest of the slide to a named
+  voice. The slide's clips play one after another.
+
+Shape and voice names may use any letters, so Danish notes such as
+`{vis: Fase 1}` or `{stemme: bjørn}` work as they are.
 
 The narrated copy of the deck has, on every slide with notes:
 
@@ -271,8 +274,9 @@ There are two ways to run it, sharing the same code (`src/pptx.mjs`):
   user's own ElevenLabs key. Nothing is uploaded; the key goes to ElevenLabs
   only, and a Content-Security-Policy allows nothing else. Voices are picked
   from the key's account, and clips are cached in the browser, so running a
-  deck again only voices what changed. Serve the repository root and open
-  `/web/pptx/` (e.g. `python3 -m http.server`, or GitHub Pages).
+  deck again only voices what changed. The page is in Danish, with a switch
+  to English, and has a sample deck in each. Serve the repository root and
+  open `/web/pptx/` (e.g. `python3 -m http.server`, or GitHub Pages).
 - **The command** `npx narrated-guides pptx deck.pptx` uses the project's
   voices like a manuscript does and writes `deck-narrated.pptx` beside the
   deck. `--dry` checks the deck without voicing it. `--say` uses the free
@@ -285,7 +289,9 @@ reported, along with what they will play with.
 
 [`copilot/narrate-deck-notes/SKILL.md`](copilot/narrate-deck-notes/SKILL.md)
 is a skill for Copilot in PowerPoint. It writes the notes in this format,
-suggests names for the shapes, and estimates the length. To add it: Copilot
+suggests names for the shapes, and estimates the length. It also knows how
+to write Danish for a voice: no abbreviations, numbers and dates as they
+are said. To add it: Copilot
 → … → Manage skills → Custom skills → Add skill.
 
 ## Tests

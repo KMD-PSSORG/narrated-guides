@@ -1,6 +1,6 @@
 ---
 name: narrate-deck-notes
-description: Use when I want to turn a presentation into a narrated video, write or improve a voice-over for my slides, or prepare a deck for narrated-guides. Writes what the voice should say into the speaker notes, with cues that make shapes appear on the right word.
+description: Use when I want to turn a presentation into a narrated video, write or improve a voice-over for my slides, or prepare a deck for narrated-guides — also when I ask in Danish, e.g. for speak, en fortællerstemme, en video af præsentationen eller noter til oplæsning. Writes what the voice should say into the speaker notes, with cues that make shapes appear on the right word.
 ---
 # Narrate a deck through its speaker notes
 
@@ -22,9 +22,19 @@ The notes are exactly what one voice says, in the order it says it. Nothing else
   - If the shape already has an animation, that animation is used and moved onto the word; shapes animated in the same click ("With Previous", "After Previous") come along by themselves, so they need no cue of their own.
   - A shape without an animation fades in. Shapes that should be visible from the start need no cue.
   - One cue per thing that appears, in the order they should appear.
-- **`{voice: name}`** lets a second voice say the rest of the slide, e.g. `{voice: expert}`. Use short lowercase names; I pick the actual voice on the page. Use a second voice only when it helps: a quote, a customer, a dialogue, a punchline.
-- **Audio tags in square brackets** tell the voice how to say something and are not read aloud: `[pauses]`, `[calm]`, `[warmly]`, `[deadpan]`, `[excited]`. Use them sparingly, at most one or two per slide, between sentences rather than mid-sentence.
-- **Same language as the deck**, unless I ask for another.
+- **`{voice: name}`** (in Danish `{stemme: navn}`) lets a second voice say the rest of the slide, e.g. `{voice: expert}` or `{stemme: borger}`. Use short lowercase names; I pick the actual voice on the page. Use a second voice only when it helps: a quote, a customer, a dialogue, a punchline.
+- **Audio tags in square brackets** tell the voice how to say something and are not read aloud: `[pauses]`, `[calm]`, `[warmly]`, `[deadpan]`, `[excited]`. Write them in English even when the notes are in Danish. Use them sparingly, at most one or two per slide, between sentences rather than mid-sentence.
+- **Same language as the deck**, unless I ask for another. The cue word `vis` is Danish already, so Danish notes need no English apart from the audio tags.
+
+## Danish notes
+
+A voice reads exactly what is written, so write Danish the way it is said:
+
+- **No abbreviations:** "for eksempel", not "fx" or "f.eks."; "blandt andet", not "bl.a."; "og så videre", not "osv."; "kroner", not "kr." or "DKK".
+- **Acronyms the way people say them:** spelled out letter by letter when they are spoken that way ("K M D", "C P R-nummer"), as a word when they are said as one ("NemID", "MitID").
+- **Numbers and dates as words when they matter for the rhythm:** "fem hundrede kroner", "den første marts", "klokken halv ti". Short, plain numbers may stay as digits.
+- **Short sentences, everyday words.** Prefer "du" to "man", active to passive, and Danish words to English ones where a Danish word is normal.
+- **No parentheses, slashes or arrows;** say "eller" or "og" instead, and turn menu paths into a sentence: "Vælg Filer, og så Eksportér."
 
 ## Example
 
@@ -32,6 +42,12 @@ A slide with a three-phase timeline whose phases are named "Phase 1", "Phase 2" 
 
 ```
 A requisition goes through three phases. {vis: Phase 1} First, you find the item in the catalogue. [pauses] {vis: Phase 2} Then you fill in the details: the cost centre, the budget, and a short justification. [pauses] {vis: Phase 3} And finally, it gets approved. {voice: approver} [deadpan] Eventually.
+```
+
+The same in Danish, with phases named "Fase 1", "Fase 2" and "Fase 3":
+
+```
+En indkøbsrekvisition går gennem tre faser. {vis: Fase 1} Først finder du varen i kataloget. [pauses] {vis: Fase 2} Så udfylder du detaljerne: omkostningssted, budget og en kort begrundelse. [pauses] {vis: Fase 3} Og til sidst bliver den godkendt. {stemme: godkender} [deadpan] På et tidspunkt.
 ```
 
 ## Do not

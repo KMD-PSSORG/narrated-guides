@@ -70,6 +70,38 @@ describe("openDeck", () => {
   });
 });
 
+/** The fixture with slide 3's notes replaced. */
+const withNotes3 = async (text) => {
+  const zip = await JSZip.loadAsync(fixture("plain"));
+  const part = "ppt/notesSlides/notesSlide3.xml";
+  const xml = await zip.file(part).async("string");
+  zip.file(part, xml.replace(/(<p:ph type="body"[\s\S]*?<a:t>)[^<]*(<\/a:t>)/, `$1${text}$2`));
+  return zip.generateAsync({ type: "uint8array" });
+};
+
+describe("Danish notes", () => {
+  it("takes {stemme: …} and voice names with æ, ø and å", async () => {
+    const deck = await openDeck(await withNotes3("Det var processen. {vis: Punchline} Spørgsmål sendes som rekvisition. {stemme: bjørn} Bent vender tilbage. {voice: Ærlig} Måske."));
+    assert.deepEqual(
+      deck.slides[2].segments.map((s) => [s.voice, s.text]),
+      [
+        [null, "Det var processen. Spørgsmål sendes som rekvisition."],
+        ["bjørn", "Bent vender tilbage."],
+        ["Ærlig", "Måske."],
+      ],
+    );
+    assert.equal(deck.slides[2].segments[0].cues[0].target, "Punchline");
+  });
+
+  it("reports by code, so a page can translate", async () => {
+    const deck = await openDeck(await withNotes3("{vis: Pointe} Spørgsmål? {stemme: bjørn} Nej."));
+    const { problems } = await checkDeck(deck, { voices: [] });
+    assert.deepEqual(problems.map((p) => p.code), ["no-shape", "voice-missing"]);
+    assert.equal(problems[0].params.target, "Pointe");
+    assert.deepEqual(problems[1].params, { voice: "bjørn" });
+  });
+});
+
 describe("checkDeck", () => {
   it("passes a deck whose cues and voices exist", async () => {
     const { problems, characters } = await checkDeck(await openDeck(fixture("plain")), { voices: ["bent"] });

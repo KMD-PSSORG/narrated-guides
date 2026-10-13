@@ -72,6 +72,11 @@ describe("parseManuscript", () => {
     );
   });
 
+  it("reads voice names with Danish letters on the speak fence", () => {
+    const scenes = parseManuscript("## Scene 1 · A\n\n```speak bjørn\nHej.\n```\n");
+    assert.equal(scenes[0].voice, "bjørn");
+  });
+
   it("does not take another fence for a speak block", () => {
     const [first] = parseManuscript(`## Scene 1 · A\n\n\`\`\`speaker\nNo.\n\`\`\`\n\n\`\`\`speak\nYes.\n\`\`\`\n`);
     assert.equal(first.text, "Yes.");
