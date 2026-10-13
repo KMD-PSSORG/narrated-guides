@@ -36,6 +36,21 @@ const da = {
   "load-voices": "Hent mine stemmer",
   remember: "Husk nøglen på denne computer",
   "key-aside": "Du finder den under ElevenLabs → Developers → API keys. Hvert tegn, stemmerne siger, tæller med i dit ElevenLabs-abonnement.",
+  "key-help-summary": "Sådan får du en nøgle",
+  "key-help-body": `<ol>
+<li>Opret en konto på <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a>. Den gratis konto giver 10.000 credits om måneden, nok til omkring 10 til 20 minutters tale afhængigt af modellen. Eksemplet her bruger under 600.</li>
+<li>Gå til <a href="https://elevenlabs.io/app/developers/api-keys" target="_blank" rel="noopener">Developers → API Keys</a>, og vælg Create Key.</li>
+<li>Giv nøglen et navn, du kan genkende, for eksempel “PowerPoint”, og vælg, hvornår den skal udløbe.</li>
+<li>Lad <strong>Restrict Key</strong> være slået til, og giv kun adgang til to ting:
+<ul>
+<li><strong>Text to Speech:</strong> Access</li>
+<li><strong>Voices:</strong> Read</li>
+</ul>
+Alt andet kan stå på No Access. Så kan nøglen kun lave tale og se dine stemmer, også hvis den slipper ud.</li>
+<li>Vil du sætte et loft, så skriv et antal credits ud for <strong>Per credit refresh period</strong>.</li>
+<li>Vælg Create Key, kopiér nøglen, og sæt den ind her. ElevenLabs viser den kun én gang.</li>
+</ol>
+<p>Gratiskontoen er til eget brug. Skal videoen ud til kunder, kræver det en betalt plan. Se ElevenLabs' vilkår.</p>`,
   "voices-help-summary": "Danske stemmer",
   "voices-help-body": `<p>En engelsk stemme kan godt tale dansk, men den lyder som en turist. Find en dansk stemme i ElevenLabs:</p>
 <ol>
@@ -133,6 +148,21 @@ const en = {
   "load-voices": "Get my voices",
   remember: "Remember the key on this computer",
   "key-aside": "Find it under ElevenLabs → Developers → API keys. Every character the voices say counts towards your ElevenLabs plan.",
+  "key-help-summary": "How to get a key",
+  "key-help-body": `<ol>
+<li>Create an account at <a href="https://elevenlabs.io" target="_blank" rel="noopener">elevenlabs.io</a>. The free plan gives 10,000 credits a month, enough for about 10 to 20 minutes of speech depending on the model. The sample deck uses fewer than 600.</li>
+<li>Go to <a href="https://elevenlabs.io/app/developers/api-keys" target="_blank" rel="noopener">Developers → API Keys</a> and choose Create Key.</li>
+<li>Give the key a name you will recognise, such as “PowerPoint”, and choose when it expires.</li>
+<li>Leave <strong>Restrict Key</strong> on and allow only two things:
+<ul>
+<li><strong>Text to Speech:</strong> Access</li>
+<li><strong>Voices:</strong> Read</li>
+</ul>
+Leave everything else on No Access. The key can then only make speech and list your voices, even if it leaks.</li>
+<li>To set a ceiling, enter a number of credits next to <strong>Per credit refresh period</strong>.</li>
+<li>Choose Create Key, copy the key and paste it here. ElevenLabs shows it only once.</li>
+</ol>
+<p>The free plan is for personal use. Videos for customers need a paid plan; see ElevenLabs' terms.</p>`,
   "voices-help-summary": "Voices in other languages",
   "voices-help-body": `<p>Any voice can speak any language, but a voice made for the language sounds far more natural. To find one in ElevenLabs:</p>
 <ol>

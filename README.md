@@ -272,7 +272,9 @@ There are two ways to run it, sharing the same code (`src/pptx.mjs`):
 
 - **The page** [`web/pptx/`](web/pptx/) runs entirely in the browser with the
   user's own ElevenLabs key. Nothing is uploaded; the key goes to ElevenLabs
-  only, and a Content-Security-Policy allows nothing else. Voices are picked
+  only, and a Content-Security-Policy allows nothing else. The key needs only
+  Text to Speech (Access) and Voices (Read); the page explains how to make a
+  restricted one. Voices are picked
   from the key's account, and clips are cached in the browser, so running a
   deck again only voices what changed. The page is in Danish, with a switch
   to English, and has a sample deck in each. Serve the repository root and
