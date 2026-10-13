@@ -17,6 +17,11 @@ it is written in front of.
 The workflow for an AI agent (stops, lessons, data and secret rules) is in
 [`skill/SKILL.md`](skill/SKILL.md).
 
+There is also a PowerPoint track for people who would rather stay in
+PowerPoint: the speaker notes are the manuscript, and the result is a
+narrated deck that PowerPoint exports to video. See
+[Narrated PowerPoint decks](#narrated-powerpoint-decks).
+
 ## Requirements
 
 - Node 20 or later
@@ -65,6 +70,7 @@ npx narrated-guides preview <name>         # preview.mp3 again: all scenes with 
 node video/record-<name>.mjs               # record the screen, timed by the voice
 npx narrated-guides assemble <name> [file] # <file>.mp4 and <file>.srt, 1920 × 1080
 npx narrated-guides frames <name> [file]   # a still at each scene start and 1.5 s after each cue
+npx narrated-guides pptx <deck.pptx>       # a narrated deck from its speaker notes (see below)
 ```
 
 `tts` sends a scene to ElevenLabs only when its text, its voice or the model
@@ -231,11 +237,64 @@ node ../cli.mjs frames demo
 scenes that explain how the guide itself was made. See its
 [README](examples/procureflow/README.md).
 
+## Narrated PowerPoint decks
+
+Everything in a slide's speaker notes is what the voice says on that slide,
+with the same `[audio tags]` as a manuscript, plus two kinds of braces:
+
+```text
+A requisition goes through three phases. {vis: Phase 1} First, you find the item. [pauses]
+{vis: Phase 2} Then you fill in the details. {voice: bent} [deadpan] Bent approves. Eventually.
+```
+
+- `{vis: Phase 1}` (or `{show: …}`) makes the shape called “Phase 1” appear on
+  the next word. The name is the one in PowerPoint's Selection Pane.
+- `{voice: bent}` hands the rest of the slide to a named voice. The slide's
+  clips play one after another.
+
+The narrated copy of the deck has, on every slide with notes:
+
+- the audio, off the slide, playing as the slide appears;
+- the slide's own animations, moved off the clicks and onto the words. A cued
+  shape's animation starts on its word. The rest of its click group (“With
+  Previous”, “After Previous”) keeps its place relative to it. A click group
+  without cues plays with the one before;
+- a fade-in for a cued shape that had no animation;
+- an automatic advance when the audio ends.
+
+PowerPoint then makes the video: File → Export → Create a Video, with
+recorded timings. Running a narrated deck again replaces its narration.
+
+There are two ways to run it, sharing the same code (`src/pptx.mjs`):
+
+- **The page** [`web/pptx/`](web/pptx/) runs entirely in the browser with the
+  user's own ElevenLabs key. Nothing is uploaded; the key goes to ElevenLabs
+  only, and a Content-Security-Policy allows nothing else. Voices are picked
+  from the key's account, and clips are cached in the browser, so running a
+  deck again only voices what changed. Serve the repository root and open
+  `/web/pptx/` (e.g. `python3 -m http.server`, or GitHub Pages).
+- **The command** `npx narrated-guides pptx deck.pptx` uses the project's
+  voices like a manuscript does and writes `deck-narrated.pptx` beside the
+  deck. `--dry` checks the deck without voicing it. `--say` uses the free
+  macOS voice with estimated word times, to try it first. Clips are cached
+  in `video/out/<deck>-pptx/`.
+
+Both check the deck first: a cue naming a shape that is not there stops
+it, with a list of the shapes that are. Animations without a cue are
+reported, along with what they will play with.
+
+[`copilot/narrate-deck-notes/SKILL.md`](copilot/narrate-deck-notes/SKILL.md)
+is a skill for Copilot in PowerPoint. It writes the notes in this format,
+suggests names for the shapes, and estimates the length. To add it: Copilot
+→ … → Manage skills → Custom skills → Add skill.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-These cover the manuscript parser, timing, subtitles, the stage and the
-config. The recorder, the voice and ffmpeg are exercised by the example.
+These cover the manuscript parser, timing, subtitles, the stage, the config
+and narrated decks (against a plain deck and one with PowerPoint's own
+click animations, in `test/fixtures/`). The recorder, the voice and ffmpeg
+are exercised by the example.
