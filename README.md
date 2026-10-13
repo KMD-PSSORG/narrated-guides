@@ -35,9 +35,10 @@ ElevenLabs' free plan is for internal use only. A video made with
 narrated-guides, whether from a manuscript or a deck, that is used for
 anything other than internal use, such as for customers, on a public website
 or in marketing, **must** be voiced on a paid plan. The cheapest, about 6
-dollars a month at the time of writing, gives 30,000 credits, a good hour of
-speech. If in doubt, use a paid plan, and see
-[ElevenLabs' plans and terms](https://elevenlabs.io/pricing).
+dollars a month at the time of writing, gives 30,000 credits. If in doubt,
+use a paid plan. The rule itself is in ElevenLabs'
+[terms of use](https://elevenlabs.io/terms-of-use); the plans are on their
+[pricing page](https://elevenlabs.io/pricing).
 
 ## Install in a project
 
