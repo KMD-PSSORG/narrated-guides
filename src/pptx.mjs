@@ -3,8 +3,9 @@
  *
  * Each slide's notes are speak text with the usual `[audio tags]` and cues.
  * `{vis: Shape name}` (or `{show: …}`) names a shape as PowerPoint's Selection
- * Pane shows it; `{voice: name}` hands the rest of the slide's notes to a named
- * voice, and the slide's clips then play one after another.
+ * Pane shows it; `{voice: name}` (or `{stemme: name}`) hands the rest of the
+ * slide's notes to a named voice, and the slide's clips then play one after
+ * another.
  *
  * Narrating a deck puts, on every slide with notes: its audio, hidden off the
  * slide and playing as the slide appears; every animation the slide already
@@ -36,7 +37,7 @@ const REL_MEDIA = "http://schemas.microsoft.com/office/2007/relationships/media"
 const MARK = "narrated-guides narration";
 const MEDIA_PREFIX = "ppt/media/narrated-guides-";
 const PIXEL = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-const VOICE = /\{voice:\s*([\w-]+)\s*\}/;
+const VOICE = /\{(?:voice|stemme):\s*([\p{L}\p{N}_-]+)\s*\}/iu;
 const VERBS = { vis: "vis", show: "vis" };
 const DECLARATION = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 const FADE_MS = 500;
@@ -166,6 +167,23 @@ export const openDeck = async (data) => {
   return { data, slides, segments: slides.flatMap((s) => s.segments.map((seg) => ({ ...seg, slide: s.number }))) };
 };
 
+/**
+ * What checkDeck and narrateDeck report, by code. Each report also carries
+ * `params`, so a page can say the same thing in another language.
+ */
+export const MESSAGES = {
+  "voice-missing": ({ voice }) => `no voice is set for "${voice}".`,
+  "unknown-verb": ({ verb }) => `{${verb}: …} is not something a deck can do, so it is left out. Use {vis: shape}.`,
+  "no-shape": ({ target, shapes }) => `there is no shape called "${target}". The shapes are: ${shapes}.`,
+  twice: ({ target }) => `two shapes are called "${target}"; the first one is used.`,
+  "uncued-with": ({ shape, leader }) => `the animation on "${shape}" has no cue, so it plays along with "${leader}".`,
+  "uncued-before": ({ shape }) => `the animation on "${shape}" has no cue, so it plays with the step before it.`,
+  "spare-cue": ({ shape }) => `"${shape}" has more cues than animations; the extra cue does nothing.`,
+  "word-count": ({ timed, expected }) => `the voice timed ${timed} words, the notes hold ${expected}; cues are matched by position.`,
+};
+
+const note = (slide, code, params) => ({ slide, code, params, message: `Slide ${slide}: ${MESSAGES[code](params)}` });
+
 // --- the slide's animations ---
 
 const numeric = (ctn) => {
@@ -255,19 +273,16 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
   const zip = await JSZip.loadAsync(deck.data);
   for (const slide of deck.slides) {
     if (!slide.segments.length) continue;
-    const at = `Slide ${slide.number}`;
+    const at = slide.number;
     for (const seg of slide.segments) {
-      if (seg.voice && voices && !voices.includes(seg.voice)) problems.push({ slide: slide.number, message: `${at}: no voice is set for "${seg.voice}".` });
+      if (seg.voice && voices && !voices.includes(seg.voice)) problems.push(note(at, "voice-missing", { voice: seg.voice }));
       for (const cue of seg.cues) {
         if (cue.verb !== "vis") {
-          warnings.push({ slide: slide.number, message: `${at}: {${cue.verb}: …} is not something a deck can do, so it is left out. Use {vis: shape}.` });
+          warnings.push(note(at, "unknown-verb", { verb: cue.verb }));
         } else if (!findShape(slide.shapes, cue.target)) {
-          problems.push({
-            slide: slide.number,
-            message: `${at}: there is no shape called "${cue.target}". The shapes are: ${[...slide.shapes.keys()].join(", ")}.`,
-          });
+          problems.push(note(at, "no-shape", { target: cue.target, shapes: [...slide.shapes.keys()].join(", ") }));
         } else if (slide.twice.has(findShape(slide.shapes, cue.target))) {
-          warnings.push({ slide: slide.number, message: `${at}: two shapes are called "${cue.target}"; the first one is used.` });
+          warnings.push(note(at, "twice", { target: cue.target }));
         }
       }
     }
@@ -278,14 +293,13 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
     const uncued = timed.filter((e) => !e.cue && e.ctn.getAttribute("presetClass") !== "mediacall");
     for (const e of uncued) {
       const leader = timed.find((o) => o.group === e.group && o.cue);
-      warnings.push({
-        slide: slide.number,
-        message: leader
-          ? `${at}: the animation on "${nameOf(e.spid)}" has no cue, so it plays along with "${nameOf(leader.spid)}".`
-          : `${at}: the animation on "${nameOf(e.spid)}" has no cue, so it plays with the step before it.`,
-      });
+      warnings.push(
+        leader
+          ? note(at, "uncued-with", { shape: nameOf(e.spid), leader: nameOf(leader.spid) })
+          : note(at, "uncued-before", { shape: nameOf(e.spid) }),
+      );
     }
-    for (const cue of spare) warnings.push({ slide: slide.number, message: `${at}: "${cue.name}" has more cues than animations; the extra cue does nothing.` });
+    for (const cue of spare) warnings.push(note(at, "spare-cue", { shape: cue.name }));
   }
   const characters = deck.segments.reduce((n, s) => n + s.text.length, 0);
   return { problems, warnings, characters };
@@ -497,7 +511,10 @@ export const narrateDeck = async (deck, clips, options = {}) => {
     const slideClips = slide.segments.map((seg, i) => {
       const clip = clips[n++];
       const { cues, warning } = anchorCues({ number: slide.number, text: seg.text, cues: seg.cues }, clip.words);
-      if (warning) warnings.push({ slide: slide.number, message: `Slide ${slide.number}: ${warning.replace(/^scene \d+: /, "")}` });
+      if (warning) {
+        const [, timedWords, expected] = warning.match(/(\d+) timed words, (\d+) in the text/) ?? [];
+        warnings.push(note(slide.number, "word-count", { timed: timedWords, expected }));
+      }
       const media = `${MEDIA_PREFIX.slice("ppt/media/".length)}${slide.number}-${i + 1}.mp3`;
       zip.file(`ppt/media/${media}`, clip.audio);
       return { media, durMs: Math.round(mp3Duration(clip.audio) * 1000), cues };

@@ -12,7 +12,7 @@
  * Pure text handling, so it also runs in a browser.
  */
 const SCENE = /^## Scene (\d+) · (.+)$/;
-const SPEAK = /^```speak(?:\s+([\w-]+))?\s*$/;
+const SPEAK = /^```speak(?:\s+([\p{L}\p{N}_-]+))?\s*$/u;
 const CUE = /\{(\p{L}+):\s*([^}]+)\}/gu;
 const TAG = /^\[[^\]]*\]$/;
 

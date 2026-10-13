@@ -1,103 +1,95 @@
 <!doctype html>
-<html lang="en">
+<html lang="da">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-wc1I0wz50YqnR9oHXKNVb+P4+LUz/Gm35kk1JanTrGg='; connect-src 'self' https://api.elevenlabs.io; media-src blob:; img-src 'self' data:; style-src 'self'; base-uri 'none'; form-action 'none'">
-  <title>Narrated decks · narrated-guides</title>
+  <title>narrated-guides</title>
   <link rel="stylesheet" href="style.css">
   <script type="importmap">{ "imports": { "jszip": "../vendor/jszip.mjs" } }</script>
   <script type="module" src="app.mjs"></script>
 </head>
 <body>
   <header>
-    <p class="eyebrow">narrated-guides</p>
-    <h1>Narrated decks</h1>
-    <p class="lede">Write what the slides should say in the speaker notes. Get the deck back with a voice on every slide, the animations on the right words, and slides that move on by themselves. PowerPoint then makes the video.</p>
-    <p class="privacy">Everything happens in this browser. Your deck is not uploaded anywhere, and your ElevenLabs key goes only to ElevenLabs, along with the text from the notes.</p>
+    <div class="top">
+      <p class="eyebrow">narrated-guides</p>
+      <button type="button" class="link" id="lang" data-i18n="lang"></button>
+    </div>
+    <h1 data-i18n="h1"></h1>
+    <p class="lede" data-i18n="lede"></p>
+    <p class="privacy" data-i18n="privacy"></p>
   </header>
 
   <main>
     <section id="step-deck">
-      <h2><span class="n">1</span> Your deck</h2>
+      <h2><span class="n">1</span> <span data-i18n="s1"></span></h2>
       <label class="drop" id="drop">
         <input type="file" id="file" accept=".pptx">
-        <strong>Drop a .pptx here</strong> or click to choose one
+        <span data-i18n="drop"></span>
       </label>
-      <p class="aside">No deck at hand? <button type="button" class="link" id="sample">Try the sample deck</button>, a three-phase timeline with one extra voice.</p>
+      <p class="aside" data-i18n="sample"></p>
       <details class="help">
-        <summary>How to write the speaker notes</summary>
-        <p>Write in the notes what the voice should say on that slide. Slides without notes are left as they are.</p>
-        <pre>A requisition goes through three phases.
-{vis: Phase 1} First, you find the item. [pauses]
-{vis: Phase 2} Then you fill in the details.
-{voice: bent} [deadpan] Bent approves. Eventually.</pre>
-        <ul>
-          <li><code>{vis: Phase 1}</code> makes the shape called “Phase 1” appear on the next word. <code>{show: …}</code> works too. The name is the one in the Selection Pane (Home → Arrange → Selection Pane), where you can also rename shapes.</li>
-          <li>If the shape already has an animation, that animation is used and moved onto the word. Shapes in the same click (“With Previous” and “After Previous”) come along. A shape without an animation fades in.</li>
-          <li><code>{voice: bent}</code> lets another voice say the rest of the slide. You pick the voice below.</li>
-          <li><code>[pauses]</code>, <code>[deadpan]</code> and other words in square brackets tell the voice how to say it. They are not read aloud.</li>
-        </ul>
+        <summary data-i18n="help-notes-summary"></summary>
+        <div data-i18n="help-notes-body"></div>
       </details>
       <details class="help">
-        <summary>Let Copilot in PowerPoint write the notes</summary>
-        <p>The <a href="../../copilot/narrate-deck-notes/SKILL.md" download="SKILL.md">narrate-deck-notes skill</a> teaches Copilot this format. It writes the notes, suggests names for the shapes, and estimates how long the video will be.</p>
-        <ol>
-          <li>In PowerPoint, open Copilot, choose … → Manage skills → Custom skills, and switch custom skills on.</li>
-          <li>Choose Add skill and upload the SKILL.md file.</li>
-          <li>Ask Copilot: <em>@narrate-deck-notes write a voice-over for this deck, about two minutes, calm and friendly.</em></li>
-        </ol>
+        <summary data-i18n="help-copilot-summary"></summary>
+        <div data-i18n="help-copilot-body"></div>
       </details>
     </section>
 
     <section id="step-check" hidden>
-      <h2><span class="n">2</span> What will happen</h2>
+      <h2><span class="n">2</span> <span data-i18n="s2"></span></h2>
       <p id="summary"></p>
       <ol id="slides" class="slides"></ol>
     </section>
 
     <section id="step-voices" hidden>
-      <h2><span class="n">3</span> Voices</h2>
+      <h2><span class="n">3</span> <span data-i18n="s3"></span></h2>
       <div class="field">
-        <label for="key">Your ElevenLabs API key</label>
+        <label for="key" data-i18n="key-label"></label>
         <div class="row">
           <input type="password" id="key" autocomplete="off" spellcheck="false" placeholder="sk_…">
-          <button type="button" id="load-voices">Get my voices</button>
+          <button type="button" id="load-voices" data-i18n="load-voices"></button>
         </div>
-        <label class="check"><input type="checkbox" id="remember"> Remember the key on this computer</label>
-        <p class="aside">Find it under ElevenLabs → Developers → API keys. Every character the voices say counts towards your ElevenLabs plan.</p>
+        <label class="check"><input type="checkbox" id="remember"> <span data-i18n="remember"></span></label>
+        <p class="aside" data-i18n="key-aside"></p>
+        <details class="help">
+          <summary data-i18n="key-help-summary"></summary>
+          <div data-i18n="key-help-body"></div>
+        </details>
       </div>
       <div id="voice-picks"></div>
       <details class="help">
-        <summary>Advanced</summary>
+        <summary data-i18n="voices-help-summary"></summary>
+        <div data-i18n="voices-help-body"></div>
+      </details>
+      <details class="help">
+        <summary data-i18n="advanced"></summary>
         <div class="field">
-          <label for="model">Model</label>
+          <label for="model" data-i18n="model-label"></label>
           <input type="text" id="model" value="eleven_v4" spellcheck="false">
-          <p class="aside">The audio tags in square brackets need a model that understands them.</p>
+          <p class="aside" data-i18n="model-aside"></p>
         </div>
       </details>
     </section>
 
     <section id="step-make" hidden>
-      <h2><span class="n">4</span> Make it</h2>
-      <button type="button" id="make" class="primary" disabled>Narrate the deck</button>
+      <h2><span class="n">4</span> <span data-i18n="s4"></span></h2>
+      <button type="button" id="make" class="primary" disabled data-i18n="make"></button>
       <p id="make-hint" class="aside"></p>
       <ol id="progress" class="progress"></ol>
       <div id="result" hidden>
-        <a id="download" class="primary button" download>Download the narrated deck</a>
+        <a id="download" class="primary button" download data-i18n="download"></a>
         <div id="report"></div>
-        <h3>Then, in PowerPoint</h3>
-        <ol class="next">
-          <li>Open the deck and press Play from start to watch it run by itself.</li>
-          <li>File → Export → Create a Video. Choose <em>Use Recorded Timings and Narrations</em>.</li>
-          <li>Changed a word? Change the notes, drop the narrated deck here again and run it once more. Only slides whose text changed cost characters.</li>
-        </ol>
+        <h3 data-i18n="then"></h3>
+        <ol class="next" data-i18n="then-body"></ol>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>Part of <a href="https://github.com/KMD-PSSORG/narrated-guides">narrated-guides</a>. The same thing from the command line: <code>narrated-guides pptx deck.pptx</code>.</p>
+    <p data-i18n="footer"></p>
   </footer>
 </body>
 </html>
