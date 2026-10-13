@@ -175,7 +175,14 @@ const findShape = (shapes, target) => {
   return [...shapes.keys()].find((name) => name.toLowerCase() === lower) ?? null;
 };
 
-const segmentsOf = (notes) => {
+/** A cue's shape and effect: a shape whose whole name matches wins over reading the last comma as an effect. */
+const pickEffect = (shapes, cue) => {
+  if (findShape(shapes, cue.target)) return cue;
+  const picked = cue.target.match(/^(.*?)\s*,\s*([^,]+?)\s*$/);
+  return picked ? { ...cue, target: picked[1], effect: picked[2] } : cue;
+};
+
+const segmentsOf = (notes, shapes) => {
   const parts = notes.split(VOICE);
   const segments = [];
   for (let i = 0; i < parts.length; i += 2) {
@@ -184,11 +191,7 @@ const segmentsOf = (notes) => {
     segments.push({
       voice: parts[i - 1] ?? null,
       text,
-      cues: cues.map((c) => {
-        const verb = VERBS[c.verb.toLowerCase()] ?? c.verb;
-        const picked = c.target.match(/^(.*?)\s*,\s*([^,]+?)\s*$/);
-        return picked ? { ...c, verb, target: picked[1], effect: picked[2] } : { ...c, verb };
-      }),
+      cues: cues.map((c) => pickEffect(shapes, { ...c, verb: VERBS[c.verb.toLowerCase()] ?? c.verb })),
     });
   }
   return segments;
@@ -211,7 +214,7 @@ export const openDeck = async (data) => {
     const notesTarget = relTarget(await readRels(zip, part), (r) => r.getAttribute("Type").endsWith("/notesSlide"));
     const notes = notesTarget ? notesText(parse(await zip.file(resolve(part, notesTarget)).async("string"))) : "";
     const { shapes, twice } = shapesOf(doc);
-    slides.push({ number: slides.length + 1, part, notes, shapes, twice, segments: segmentsOf(notes) });
+    slides.push({ number: slides.length + 1, part, notes, shapes, twice, segments: segmentsOf(notes, shapes) });
   }
   return { data, slides, segments: slides.flatMap((s) => s.segments.map((seg) => ({ ...seg, slide: s.number }))) };
 };
@@ -332,17 +335,14 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
           warnings.push(note(at, "unknown-verb", { verb: cue.verb }));
         } else if (!findShape(slide.shapes, cue.target)) {
           problems.push(note(at, "no-shape", { target: cue.target, shapes: [...slide.shapes.keys()].join(", ") }));
-        } else {
-          if (slide.twice.has(findShape(slide.shapes, cue.target))) warnings.push(note(at, "twice", { target: cue.target }));
-          if (cue.effect && !effectKey(cue.effect)) {
-            warnings.push(note(at, "unknown-effect", { effect: cue.effect, shape: findShape(slide.shapes, cue.target) }));
-          }
+        } else if (slide.twice.has(findShape(slide.shapes, cue.target))) {
+          warnings.push(note(at, "twice", { target: cue.target }));
         }
       }
     }
     const doc = parse(await zip.file(slide.part).async("string"));
     const narration = new Set(all(doc, NS.p, "cNvPr").filter(isNarration).map((c) => Number(c.getAttribute("id"))));
-    const { timed, spare } = plan(effectsOf(doc, narration), slideCues(slide));
+    const { timed, fades, spare } = plan(effectsOf(doc, narration), slideCues(slide));
     const nameOf = (spid) => [...slide.shapes].find(([, id]) => id === spid)?.[0] ?? `shape ${spid}`;
     const uncued = timed.filter((e) => !e.cue && e.ctn.getAttribute("presetClass") !== "mediacall");
     for (const e of uncued) {
@@ -355,6 +355,7 @@ export const checkDeck = async (deck, { voices = null } = {}) => {
     }
     for (const cue of spare) warnings.push(note(at, "spare-cue", { shape: cue.name }));
     for (const e of timed) if (e.cue?.effect) warnings.push(note(at, "effect-kept", { effect: e.cue.effect, shape: e.cue.name }));
+    for (const f of fades) if (f.effect && !effectKey(f.effect)) warnings.push(note(at, "unknown-effect", { effect: f.effect, shape: f.name }));
   }
   const characters = deck.segments.reduce((n, s) => n + s.text.length, 0);
   return { problems, warnings, characters };

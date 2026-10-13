@@ -253,7 +253,8 @@ A requisition goes through three phases. {vis: Phase 1} First, you find the item
   in: fade (the default), appear, zoom, float, fly (from below), fly left, fly
   right, fly top, wipe or grow, or their Danish names (tone, straks, zoom,
   svæv, fly, fly venstre, fly højre, fly top, visk, voks). A shape that
-  already has an animation keeps it.
+  already has an animation keeps it, and a shape whose whole name contains a
+  comma is still found by that name.
 - `{voice: bent}` (or `{stemme: bent}`) hands the rest of the slide to a named
   voice. The slide's clips play one after another.
 
