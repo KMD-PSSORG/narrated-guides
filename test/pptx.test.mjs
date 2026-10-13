@@ -112,7 +112,17 @@ describe("picked effects", () => {
     els(doc, "cTn").find((c) => c.getAttribute("presetClass") === "entr" && c.getElementsByTagNameNS(P, "spTgt")[0]?.getAttribute("spid") === spid);
 
   it("brings a shape in with the effect its cue names, in Danish or English", async () => {
-    for (const [name, id, sub] of [["zoom", "53", "16"], ["svæv", "42", "0"], ["Fly venstre", "2", "8"], ["grow", "31", "0"]]) {
+    for (const [name, id, sub] of [
+      ["straks", "1", "0"],
+      ["zoom", "53", "16"],
+      ["svæv", "42", "0"],
+      ["fly", "2", "4"],
+      ["Fly venstre", "2", "8"],
+      ["fly right", "2", "2"],
+      ["fly top", "2", "1"],
+      ["wipe", "22", "8"],
+      ["voks", "31", "0"],
+    ]) {
       const deck = await openDeck(await withNotes3(`Det var processen. {vis: Punchline, ${name}} Spørgsmål?`));
       const { bytes, report } = await narrateDeck(deck, clipsFor(deck));
       const spid = String(deck.slides[2].shapes.get("Punchline"));
