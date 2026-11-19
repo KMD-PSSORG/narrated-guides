@@ -11,7 +11,7 @@
  * sample of frames is rendered again, out of order, in a fresh browser, and
  * the run fails if any of them differs.
  *
- * Writes <outDir>/<video>/raw.mp4 (lossless) and timeline.json for assemble.
+ * Writes <outDir>/<video>/raw.mkv (lossless) and timeline.json for assemble.
  * Everything that can be wrong with the manuscript is found before a browser
  * opens.
  */
@@ -28,7 +28,7 @@ import { filmEvents, filmTimeline } from "./timeline.mjs";
 
 const FPS = 30;
 const SIZE = { width: 1920, height: 1080 };
-const PICTURE = "raw.mp4";
+const PICTURE = "raw.mkv"; // not .mp4: a finished video is always <name>.mp4, also for a film called "raw"
 const STILL_AFTER = 0.6; // a review still this long after a cue catches a gesture while it is held
 
 /** The film's stills as data URIs, by name. `pictures` maps a name to a file in the project. */
@@ -74,13 +74,19 @@ const relative = (file) => path.relative(process.cwd(), file);
 const openFilm = async (url) => {
   const { chromium } = await import("playwright");
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: SIZE });
   const failures = [];
-  page.on("pageerror", (err) => failures.push(err.message));
-  await page.goto(url);
-  await page.waitForSelector("html[data-ready]", { state: "attached", timeout: 30_000 }).catch(() => {
-    throw new Error(`The film's page did not start${failures.length ? `: ${failures.join("; ")}` : "."}`);
-  });
+  let page;
+  try {
+    page = await browser.newPage({ viewport: SIZE });
+    page.on("pageerror", (err) => failures.push(err.message));
+    await page.goto(url);
+    await page.waitForSelector("html[data-ready]", { state: "attached", timeout: 30_000 });
+  } catch (err) {
+    // A page that never started (a figure whose two drawings differ, say)
+    // must not leave its browser running behind the error.
+    await browser.close();
+    throw new Error(`The film's page did not start: ${failures.length ? failures.join("; ") : err.message.split("\n")[0]}`);
+  }
   const shot = async (frame) => {
     await page.evaluate((t) => window.render(t), frame / FPS);
     return page.screenshot({ type: "png" });

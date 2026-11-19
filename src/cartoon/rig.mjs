@@ -249,13 +249,17 @@ export const buildFigure = (parent, figure) => {
 
     // Legs: hips and feet close up as the body turns, knees and toes go the
     // way it faces, and the near leg is drawn last.
+    // A step is measured in the room, and this is drawn inside the figure's
+    // own scale: without bringing it back, a planted foot would slide along
+    // the floor by the difference.
     const feet = feetAt(walk);
+    const along = (which) => feet[which][0] / figure.scale;
     const mix = (front, side) => front * c + side * s;
     const toe = (front) => { const v = mix(front, to); return Math.abs(v) < 0.4 ? 0.4 * (Math.sign(v) || to) : v; };
     for (const which of to === 1 ? ["l", "r"] : ["r", "l"]) parts.legs.append(legs[which].group);
     for (const [which, sign] of [["l", -1], ["r", 1]]) {
       const hip = [sign * B.hip.spread * c, -B.hip.height + bodyY];
-      drawLeg(legs[which], hip, [sign * B.foot.spread * c + feet[which][0], feet[which][1]], mix(sign, -to), toe(-sign));
+      drawLeg(legs[which], hip, [sign * B.foot.spread * c + along(which), feet[which][1]], mix(sign, -to), toe(-sign));
     }
 
     for (const [which, sign] of [["l", -1], ["r", 1]]) {

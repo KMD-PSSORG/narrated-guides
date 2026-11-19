@@ -24,21 +24,29 @@ export const planWalk = (from, to, start) => {
  * takes over from the one before it, wherever that had got to.
  */
 export const walkAt = (walks, t, startX) => {
-  let at = { x: startX, progress: 0, weight: 0, dir: 0, step: 0 };
-  for (const [i, walk] of walks.entries()) {
-    if (t < walk.start) continue;
-    const f = walk.duration ? Math.min(1, (t - walk.start) / walk.duration) : 1;
-    const x = walk.from + (walk.to - walk.from) * ease(f);
-    at = f < 1
-      ? { x, progress: Math.abs(x - walk.from) / walk.step, weight: Math.min(1, f * 7, (1 - f) * 7), dir: Math.sign(walk.to - walk.from), step: walk.step }
-      : { x: walk.to, progress: 0, weight: 0, dir: 0, step: 0 };
+  // The walks are in the order they set off, and the last one to have set
+  // off is the one it is on.
+  let i = -1;
+  for (let k = 0; k < walks.length && walks[k].start <= t; k++) i = k;
+  if (i < 0) return { x: startX, progress: 0, weight: 0, dir: 0, step: 0 };
 
-    // A walk that takes over from one in mid-stride starts with its own
-    // weight at nothing, which would snap the legs together in one frame. So
-    // it carries the stride it interrupted and lets it fade as its own fades in.
+  const walk = walks[i];
+  const f = walk.duration ? Math.min(1, (t - walk.start) / walk.duration) : 1;
+  const x = walk.from + (walk.to - walk.from) * ease(f);
+  const at = f < 1
+    ? { x, progress: Math.abs(x - walk.from) / walk.step, weight: Math.min(1, f * 7, (1 - f) * 7), dir: Math.sign(walk.to - walk.from), step: walk.step }
+    : { x: walk.to, progress: 0, weight: 0, dir: 0, step: 0 };
+
+  // A walk that takes over from one in mid-stride starts with its own weight
+  // at nothing, which would snap the legs together in one frame. So it
+  // carries the stride it interrupted and lets it fade as its own fades in.
+  // Only asked about while it still fades: this is called for every step of
+  // the springs, and looking back through every earlier walk each time would
+  // double the work with every {gå}.
+  const fade = 1 - ease((t - walk.start) / LET_GO);
+  if (fade > 0 && i > 0) {
     const interrupted = walkAt(walks.slice(0, i), walk.start, startX);
-    const fade = 1 - ease((t - walk.start) / LET_GO);
-    if (fade > 0 && (interrupted.weight > 0 || interrupted.carry)) at.carry = { ...interrupted, fade };
+    if (interrupted.weight > 0 || interrupted.carry) at.carry = { ...interrupted, fade };
   }
   return at;
 };

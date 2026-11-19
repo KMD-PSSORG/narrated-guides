@@ -109,7 +109,9 @@ export const targetAt = (score, words, t) => {
   pose.rForeFwd += (-24 * swing + 22 * walk.weight) * (1 - taken.r);
 
   const long = (word) => [...word.text].filter((c) => /\p{L}/u.test(c)).length >= 6;
-  pose.nod = words.some((word) => long(word) && t >= word.start && t < word.start + 0.12) ? 6 : 0;
+  // The time first: this runs for every step of the springs, and counting
+  // the letters of every word in the film each time would add up.
+  pose.nod = words.some((word) => t >= word.start && t < word.start + 0.12 && long(word)) ? 6 : 0;
   pose.sway = walk.x;
   return pose;
 };

@@ -336,7 +336,7 @@ at a time instead of being recorded, and the same manuscript gives the same
 film every time. A correction is a change to a line of text.
 
 ```text
-manuscript.md ──tts──▶ scene-NN.mp3 + word timings ──film──▶ raw.mp4 + timeline.json ──assemble──▶ video.mp4 + video.srt
+manuscript.md ──tts──▶ scene-NN.mp3 + word timings ──film──▶ raw.mkv + timeline.json ──assemble──▶ video.mp4 + video.srt
 ```
 
 `tts`, `preview`, `assemble` and `frames` are the same commands as for a
