@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { request } from "node:http";
 import { after, before, describe, it } from "node:test";
 import { serveFilm } from "../src/cartoon/serve.mjs";
 
@@ -25,5 +26,17 @@ describe("serveFilm", () => {
 
   it("only answers reads", async () => {
     assert.equal((await get("/film.json", { method: "POST" })).status, 404);
+  });
+
+  it("refuses a path it cannot even read, and carries on serving", async () => {
+    // Sent as written: fetch would tidy these paths before they left.
+    const port = Number(new URL(server.url).port);
+    const raw = (path) =>
+      new Promise((resolve, reject) => {
+        request({ host: "127.0.0.1", port, path }, (response) => { response.resume(); resolve(response.statusCode); }).on("error", reject).end();
+      });
+    assert.equal(await raw("//"), 404);
+    assert.equal(await raw("//["), 404);
+    assert.equal((await get("/film.json")).status, 200);
   });
 });

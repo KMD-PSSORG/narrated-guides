@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { STEP, feetAt, planWalk, walkAt } from "../src/cartoon/walk.mjs";
+import { STEP, bodyAt, feetAt, planWalk, walkAt } from "../src/cartoon/walk.mjs";
 
 const close = (a, b, e = 1e-6) => assert.ok(Math.abs(a - b) < e, `${a} is not ${b}`);
 const walk = planWalk(1240, 900, 5);
@@ -51,5 +51,45 @@ describe("feetAt", () => {
       const feet = feetAt(walkAt([walk], t, 1240));
       assert.ok(feet.l[1] === 0 || feet.r[1] === 0);
     }
+  });
+});
+
+describe("bodyAt", () => {
+  it("stands still and upright when it is not walking", () => {
+    assert.deepEqual(bodyAt(walkAt([], 3, 1240)), { bob: 0, lean: 0 });
+  });
+
+  it("leans the way it goes while it walks", () => {
+    assert.equal(bodyAt(walkAt([walk], 5.75, 1240)).lean, -3);
+  });
+});
+
+describe("a walk that interrupts a walk", () => {
+  // Turning back half way: the first walk is in full stride when the second takes over.
+  const turnsAt = 5.9;
+  const walks = [walk, planWalk(walkAt([walk], turnsAt, 1240).x, 1240, turnsAt)];
+  const before = walkAt(walks, turnsAt - 1e-4, 1240), after = walkAt(walks, turnsAt + 1e-4, 1240);
+
+  it("is in mid-stride when it happens, or this would test nothing", () => {
+    assert.equal(before.weight, 1);
+    assert.ok(Math.abs(feetAt(before).l[0] - feetAt(before).r[0]) > 20);
+  });
+
+  it("leaves the feet where they were at the moment it takes over", () => {
+    for (const foot of ["l", "r"]) {
+      for (const axis of [0, 1]) close(feetAt(after)[foot][axis], feetAt(before)[foot][axis], 1);
+    }
+  });
+
+  it("leaves the body's dip and lean where they were, too", () => {
+    close(bodyAt(after).bob, bodyAt(before).bob, 0.5);
+    close(bodyAt(after).lean, bodyAt(before).lean, 0.2);
+  });
+
+  it("has let go of the old walk a moment later, and goes the new way", () => {
+    const later = walkAt(walks, turnsAt + 0.6, 1240);
+    assert.equal(later.dir, 1);
+    assert.ok(bodyAt(later).lean > 0);
+    for (const foot of Object.values(feetAt(later))) assert.ok(foot.every(Number.isFinite));
   });
 });

@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, it } from "node:test";
-import { castOf, loadPictures, sampleFrames } from "../src/cartoon/film.mjs";
+import { castOf, loadPictures, sampleFrames, unheard } from "../src/cartoon/film.mjs";
 
 describe("loadPictures", () => {
   const root = mkdtempSync(path.join(tmpdir(), "ng-"));
@@ -45,4 +45,17 @@ describe("sampleFrames", () => {
   });
 
   it("takes every frame of a film shorter than its sample", () => assert.deepEqual(sampleFrames(3), [2, 1, 0]));
+});
+
+describe("unheard", () => {
+  const scenes = [{ scene: 1, voice: null }, { scene: 2, voice: "bent" }];
+
+  it("has nothing to say when the figure's voice speaks a scene", () => {
+    assert.equal(unheard("default", scenes), null);
+    assert.equal(unheard("bent", scenes), null);
+  });
+
+  it("warns that the figure will never open its mouth, and names the voices there are", () => {
+    assert.match(unheard("dennis", scenes), /"dennis".*default.*bent/s);
+  });
 });
