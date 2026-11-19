@@ -8,31 +8,13 @@
  * `--dry` checks the deck without voicing it; `--say` uses the free macOS
  * voice with estimated word times, to try the mechanics first.
  */
-import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { readVoiceSecrets } from "./config.mjs";
-import { spokenWords } from "./manuscript.mjs";
 import { checkDeck, narrateDeck, openDeck } from "./pptx.mjs";
-import { durationOf, voiceScene } from "./tts.mjs";
-
-const sayClip = (dir, id, text) => {
-  const aiff = path.join(dir, `${id}.aiff`);
-  const mp3 = path.join(dir, `${id}.mp3`);
-  const spoken = spokenWords(text);
-  execFileSync("say", ["-o", aiff, spoken.join(" ")]);
-  execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", aiff, "-ar", "44100", "-b:a", "128k", mp3]);
-  const duration = durationOf(mp3);
-  const total = spoken.reduce((n, w) => n + w.length + 1, 0);
-  let t = 0;
-  const words = spoken.map((word) => {
-    const start = (t / total) * duration;
-    t += word.length + 1;
-    return { text: word, start, end: (t / total) * duration };
-  });
-  return { audio: readFileSync(mp3), words };
-};
+import { sayClip } from "./say.mjs";
+import { voiceScene } from "./tts.mjs";
 
 export const narratePptxFile = async (config, file, { dry = false, say = false } = {}) => {
   const name = path.basename(file, path.extname(file));

@@ -2,7 +2,8 @@
 /**
  * narrated-guides <command> — run from the project root, next to guides.config.mjs.
  *
- *   tts <manuscript>          voice a manuscript (a path, or a name in the manuscript folder)
+ *   tts <manuscript> [--say]  voice a manuscript (a path, or a name in the manuscript folder);
+ *                             --say uses the free macOS voice, to try it first
  *   preview <video>           the voice as one mp3 to listen to
  *   assemble <video> [name]   recording + voice → <name>.mp4 and <name>.srt
  *   frames <video> [name]     a still at every cue, for review
@@ -16,14 +17,14 @@ import { narratePptxFile } from "./src/pptx-file.mjs";
 
 const [command, first, ...rest] = process.argv.slice(2);
 const usage =
-  "usage: narrated-guides tts <manuscript> | preview <video> | assemble <video> [name] | frames <video> [name] | pptx <deck.pptx> [--dry | --say]";
+  "usage: narrated-guides tts <manuscript> [--say] | preview <video> | assemble <video> [name] | frames <video> [name] | pptx <deck.pptx> [--dry | --say]";
 
 const main = async () => {
   if (!command || !first) throw new Error(usage);
   const config = await loadConfig();
   switch (command) {
     case "tts": {
-      const video = await voiceManuscript(config, first);
+      const video = await voiceManuscript(config, first, { say: rest.includes("--say") });
       return preview(config, video);
     }
     case "preview":

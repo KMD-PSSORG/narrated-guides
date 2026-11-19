@@ -66,33 +66,54 @@ export const durationOf = (file) =>
 export const manuscriptPath = (config, manuscript) =>
   existsSync(manuscript) ? path.resolve(manuscript) : path.join(config.manuscripts, `${manuscript.replace(/\.md$/, "")}.md`);
 
-/** Voices `manuscript` into `<outDir>/<name>/audio`. Returns the video's name. */
-export const voiceManuscript = async (config, manuscript) => {
+/** A trial scene's hash. It can never equal a voiced scene's, so `tts` voices it properly later. */
+export const sayHash = (text) => `say:${createHash("sha256").update(text).digest("hex").slice(0, 16)}`;
+
+/** Stops the free voice from replacing a scene ElevenLabs voiced. A new scene and an earlier trial pass. */
+export const guardSay = (cached, id) => {
+  if (!cached || cached.timing === "say") return;
+  throw new Error(
+    `${id} was voiced by ElevenLabs and is not replaced by the free voice. To try the free voice anyway, delete ${id}.mp3 and ${id}.json first.`,
+  );
+};
+
+/**
+ * Voices `manuscript` into `<outDir>/<name>/audio`. Returns the video's name.
+ * With `say`, the free macOS voice is used: no key is read, nothing is sent,
+ * and the word times are estimates.
+ */
+export const voiceManuscript = async (config, manuscript, { say = false } = {}) => {
   const file = manuscriptPath(config, manuscript);
   const name = path.basename(file, ".md");
   const out = path.join(config.outDir, name, "audio");
   mkdirSync(out, { recursive: true });
 
-  const { key, voice: defaultVoice, voices } = readVoiceSecrets(config.voice.envFile, config.voice.voices);
+  const secrets = say ? null : readVoiceSecrets(config.voice.envFile, config.voice.voices);
+  const sayClip = say ? (await import("./say.mjs")).sayClip : null;
   const scenes = readManuscript(file);
   let characters = 0;
 
   for (const scene of scenes) {
-    if (scene.voice && !voices[scene.voice]) {
+    if (!say && scene.voice && !secrets.voices[scene.voice]) {
       throw new Error(`Scene ${scene.number} uses the voice "${scene.voice}", which voice.voices in the config does not name.`);
     }
-    const voice = {
-      key,
-      voice: scene.voice ? voices[scene.voice] : defaultVoice,
-      model: config.voice.model,
-      format: config.voice.format,
-    };
+    const voice = say
+      ? null
+      : {
+          key: secrets.key,
+          voice: scene.voice ? secrets.voices[scene.voice] : secrets.voice,
+          model: config.voice.model,
+          format: config.voice.format,
+        };
     const id = `scene-${String(scene.number).padStart(2, "0")}`;
-    const hash = createHash("sha256").update(`${voice.model}\n${voice.voice}\n${scene.text}`).digest("hex").slice(0, 16);
+    const hash = say
+      ? sayHash(scene.text)
+      : createHash("sha256").update(`${voice.model}\n${voice.voice}\n${scene.text}`).digest("hex").slice(0, 16);
     const mp3 = path.join(out, `${id}.mp3`);
     const json = path.join(out, `${id}.json`);
 
     const cached = existsSync(json) ? JSON.parse(readFileSync(json, "utf8")) : null;
+    if (say) guardSay(cached, id);
     if (cached?.hash === hash && existsSync(mp3)) {
       const { cues, warning } = anchorCues(scene, cached.words);
       if (warning) console.warn(`  ${warning}`);
@@ -101,8 +122,16 @@ export const voiceManuscript = async (config, manuscript) => {
       continue;
     }
 
-    const { audio, words, timing } = await voiceScene(voice, scene);
-    writeFileSync(mp3, audio);
+    let words, timing;
+    if (say) {
+      ({ words } = sayClip(out, id, scene.text));
+      timing = "say";
+    } else {
+      const voiced = await voiceScene(voice, scene);
+      writeFileSync(mp3, voiced.audio);
+      ({ words, timing } = voiced);
+      characters += scene.text.length;
+    }
     const { cues, warning } = anchorCues(scene, words);
     if (warning) console.warn(`  ${warning}`);
     const duration = durationOf(mp3);
@@ -114,11 +143,10 @@ export const voiceManuscript = async (config, manuscript) => {
         2,
       ),
     );
-    characters += scene.text.length;
     const by = scene.voice ? `, voice ${scene.voice}` : "";
     console.log(`${id}: ${duration.toFixed(1)} s, ${words.length} words, ${cues.length} cues (${timing}${by})`);
   }
 
-  console.log(`sent ${characters} characters to ElevenLabs`);
+  if (!say) console.log(`sent ${characters} characters to ElevenLabs`);
   return name;
 };
