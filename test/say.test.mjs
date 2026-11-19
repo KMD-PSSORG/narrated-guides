@@ -33,6 +33,13 @@ describe("guardSay", () => {
     guardSay({ timing: "say", hash: sayHash("Hej") }, "scene-01");
   });
 
+  it("refuses audio it cannot tell the origin of", () => {
+    // A voicing that was interrupted can leave a paid clip with no record beside it.
+    assert.throws(() => guardSay(null, "scene-01", true), /scene-01.*delete/s);
+    guardSay(null, "scene-01", false);
+    guardSay({ timing: "say", hash: sayHash("Hej") }, "scene-01", true);
+  });
+
   it("refuses to replace a scene that ElevenLabs voiced", () => {
     assert.throws(() => guardSay({ timing: "with-timestamps", hash: "0123456789abcdef" }, "scene-01"), /scene-01.*ElevenLabs/s);
     assert.throws(() => guardSay({ timing: "forced-alignment", hash: "0123456789abcdef" }, "scene-01"), /ElevenLabs/);

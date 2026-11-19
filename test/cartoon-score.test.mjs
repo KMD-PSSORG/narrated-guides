@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { aimAt } from "../src/cartoon/aim.mjs";
+import { FORWARD, aimAt } from "../src/cartoon/aim.mjs";
+import { limbSeen, viewOf } from "../src/cartoon/project.mjs";
 import { checkCues, scoreOf } from "../src/cartoon/score.mjs";
 
 const set = {
@@ -23,9 +24,23 @@ describe("aimAt", () => {
     assert.deepEqual([right.arm, right.body, right.turn], ["r", 0.5, 1]);
   });
 
-  it("lifts the arm to the thing's height", () => {
-    close(aimAt(1000, 500, { x: 900, y: 400 }).out, 135);
-    close(aimAt(1000, 500, { x: 900, y: 600 }).out, 45);
+  it("lifts the arm so that it points at the thing on screen, half turned as the figure then is", () => {
+    // What counts is where the arm points in the picture, after the body's
+    // half turn and the arm's reach forward have had their say.
+    for (const thing of [{ x: 900, y: 400 }, { x: 900, y: 600 }, { x: 700, y: 100 }, { x: 1300, y: 450 }, { x: 400, y: 500 }]) {
+      const aim = aimAt(1000, 500, thing);
+      const seen = limbSeen(aim.arm === "l" ? -1 : 1, aim.out, FORWARD, viewOf(aim.body)).dir;
+      const wanted = [thing.x - 1000, thing.y - 500];
+      const length = Math.hypot(...wanted);
+      close((seen[0] * wanted[1] - seen[1] * wanted[0]) / length, 0);
+      assert.ok(seen[0] * wanted[0] + seen[1] * wanted[1] > 0, `points away from ${thing.x},${thing.y}`);
+    }
+  });
+
+  it("points as high as it can at a thing straight above, which a half-turned arm cannot reach", () => {
+    const aim = aimAt(1000, 500, { x: 1000, y: 100 });
+    assert.ok(Number.isFinite(aim.out));
+    assert.ok(limbSeen(1, aim.out, FORWARD, viewOf(aim.body)).dir[1] < 0);
   });
 });
 
@@ -89,6 +104,11 @@ describe("scoreOf", () => {
     assert.equal(moments[0].start, 10);
     assert.equal(late.length, 1);
     close(late[0].by, 0.16);
+  });
+
+  it("tells a moment when its scene begins, so that it cannot move before it", () => {
+    assert.equal(score([cue("vink", "hej", 10.1, 10)]).moments[0].from, 10);
+    assert.equal(score([cue("gestus", "åben", 15, 10)]).moments[0].from, 10);
   });
 
   it("aims a pointing from where the figure is by then", () => {

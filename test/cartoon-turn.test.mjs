@@ -15,6 +15,17 @@ describe("morph", () => {
 
   it("slides every number in between", () => assert.equal(slide(0.5), "M0.00,0.00 L15.00,5.00 Z"));
 
+  it("reads every way SVG writes a number", () => {
+    const same = (d) => morph(d, d)(0.5);
+    assert.equal(same("M.5,1. L1e1,-2.5e-1"), "M0.50,1.00 L10.00,-0.25");
+    assert.equal(same("M+3,-.5"), "M3.00,-0.50");
+  });
+
+  it("keeps apart numbers that were written without anything between them", () => {
+    const same = (d) => morph(d, d)(0);
+    assert.equal(same("M.5.5 L1-2"), "M0.50 0.50 L1.00 -2.00");
+  });
+
   it("refuses two drawings with different points", () => {
     assert.throws(() => morph("M0,0 L10,0", "M0,0 L10,0 L5,5"), /differ/);
   });

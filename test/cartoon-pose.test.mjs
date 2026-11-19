@@ -36,6 +36,27 @@ describe("targetAt", () => {
     assert.deepEqual([pose.rUpOut, pose.rForeOut], [30, 105]);
   });
 
+  it("blends into a newer gesture instead of adding it on top", () => {
+    // The same gesture asked for again while the first is still held.
+    const twice = { ...empty, moments: [{ verb: "gestus", target: "åben", at: 5, start: 4.72 }, { verb: "gestus", target: "åben", at: 5.6, start: 5.32 }] };
+    const pose = targetAt(twice, [], 5.8);
+    assert.deepEqual([pose.lUpOut, pose.lUpFwd, pose.lForeOut, pose.lForeFwd], [30, 15, 105, 35]);
+  });
+
+  it("lets a pointing take over an arm that is already raised, and leaves the other raised", () => {
+    const aim = { arm: "l", body: -0.5, turn: -1, out: 100 };
+    const both = { ...empty, moments: [{ verb: "gestus", target: "åben", at: 5, start: 4.72 }, { verb: "peg", target: "tavle", at: 5.5, start: 5.2, aim }] };
+    const pose = targetAt(both, [], 5.8);
+    assert.deepEqual([pose.lUpOut, pose.lForeOut], [100, 103]);
+    assert.deepEqual([pose.rUpOut, pose.rForeOut], [30, 105]);
+  });
+
+  it("does not move before its scene has begun, wind-up included", () => {
+    const first = { ...empty, moments: [{ verb: "vink", target: "hej", at: 10.1, start: 10, from: 10 }] };
+    assert.deepEqual(targetAt(first, [], 9.95), { ...REST, sway: 1240 });
+    assert.notEqual(targetAt(first, [], 10.2).rUpOut, REST.rUpOut);
+  });
+
   it("points with the aiming arm only, and turns head and body its way", () => {
     const aim = { arm: "l", body: -0.5, turn: -1, out: 100 };
     const pose = targetAt({ ...empty, moments: [{ verb: "peg", target: "tavle", at: 5, start: 4.7, aim }] }, [], 6);
