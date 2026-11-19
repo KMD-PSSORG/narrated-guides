@@ -49,6 +49,18 @@ export const castOf = (cast) => {
   return { voice, figure, at };
 };
 
+/**
+ * A warning when no scene is spoken by the figure's voice: every scene would
+ * then be a narrator off screen and the figure would never open its mouth,
+ * which is far more often a misspelt cast than a plan. Null when all is well.
+ */
+export const unheard = (voice, scenes) => {
+  const voices = [...new Set(scenes.map((scene) => scene.voice ?? "default"))];
+  return voices.includes(voice)
+    ? null
+    : `No scene is spoken by "${voice}", so the figure never opens its mouth. The manuscript's voices are: ${voices.join(", ")}.`;
+};
+
 /** Up to `of` frames spread evenly over the film, the last one first, to be rendered again. */
 export const sampleFrames = (count, of = 12) => {
   const n = Math.min(count, of);
@@ -94,6 +106,8 @@ export const film = async (config, video, { set, cast, pictures = {} }, { previe
 
   const { voice, figure, at } = castOf(cast);
   if (!set.marks[at]) throw new Error(`The figure starts at "${at}", which is not a mark in the set. The marks are: ${Object.keys(set.marks).join(", ")}.`);
+  const silent = unheard(voice, scenes);
+  if (silent) console.warn(`  ${silent}`);
   const embedded = loadPictures(pictures, config.root);
   const problems = checkCues(cues, { set, pictures: embedded });
   for (const problem of problems) console.error(`  ${problem}`);

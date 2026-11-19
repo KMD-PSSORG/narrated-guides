@@ -22,7 +22,7 @@
  */
 import { morph } from "./morph.mjs";
 import { featureSeen, limbSeen, viewOf } from "./project.mjs";
-import { feetAt } from "./walk.mjs";
+import { bodyAt, feetAt } from "./walk.mjs";
 
 const NS = "http://www.w3.org/2000/svg";
 const n = (v) => v.toFixed(2);
@@ -131,8 +131,11 @@ export const buildFigure = (parent, figure) => {
   };
   const legs = { l: buildLeg(), r: buildLeg() };
 
+  // Puts an arm's pieces in their layers. Done for both arms on every frame,
+  // left then right, and not only when an arm changes layer: an arm that came
+  // back to the front would otherwise land on top of the other, and which one
+  // is on top would depend on the frames drawn before this one.
   const placeArm = (arm, behind) => {
-    if (arm.behind === behind) return;
     arm.behind = behind;
     if (behind) parts.armBehind.append(arm.upperOut, arm.upperFill, arm.fore);
     else { parts.upperOut.append(arm.upperOut); parts.upperFill.append(arm.upperFill); parts.armFront.append(arm.fore); }
@@ -231,11 +234,11 @@ export const buildFigure = (parent, figure) => {
    * handsAt, `mouth` a shape, and `t` the film's time, for breathing and blinks.
    */
   const draw = ({ x, floor, pose, walk, hands, mouth, t }) => {
-    const wt = walk.weight, f = walk.progress - Math.floor(walk.progress);
+    const wt = walk.weight, gait = bodyAt(walk);
     const lag = pose.sway - walk.x; // how far the body's sprung place trails its real one
-    // Down as a foot lands, up as it passes; breathing on top.
-    const bodyY = 8 * wt * Math.cos(2 * Math.PI * f) + Math.sin(t * 1.9) * 1.5;
-    const lean = walk.dir * 3 * wt + lag * 0.09 + Math.sin(t * 0.9) * 0.5;
+    // The walk's dip and lean, with breathing and a slow sway on top.
+    const bodyY = gait.bob + Math.sin(t * 1.9) * 1.5;
+    const lean = gait.lean + lag * 0.09 + Math.sin(t * 0.9) * 0.5;
     root.setAttribute("transform", `translate(${n(x)},${n(floor)}) scale(${figure.scale})`);
     parts.body.setAttribute("transform", `translate(0,${n(bodyY)}) rotate(${n(lean)},0,${-B.hip.height})`);
     parts.shadow.setAttribute("rx", n(160 + 20 * wt));
@@ -249,8 +252,7 @@ export const buildFigure = (parent, figure) => {
     const feet = feetAt(walk);
     const mix = (front, side) => front * c + side * s;
     const toe = (front) => { const v = mix(front, to); return Math.abs(v) < 0.4 ? 0.4 * (Math.sign(v) || to) : v; };
-    const order = to === 1 ? ["l", "r"] : ["r", "l"];
-    if (parts.legs.lastChild !== legs[order[1]].group) for (const which of order) parts.legs.append(legs[which].group);
+    for (const which of to === 1 ? ["l", "r"] : ["r", "l"]) parts.legs.append(legs[which].group);
     for (const [which, sign] of [["l", -1], ["r", 1]]) {
       const hip = [sign * B.hip.spread * c, -B.hip.height + bodyY];
       drawLeg(legs[which], hip, [sign * B.foot.spread * c + feet[which][0], feet[which][1]], mix(sign, -to), toe(-sign));

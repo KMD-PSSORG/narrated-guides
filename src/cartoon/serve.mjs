@@ -41,7 +41,15 @@ export const serveFilm = ({ data, voice = null }) =>
       createReadStream(file).pipe(response);
     };
     const server = createServer((request, response) => {
-      const { pathname } = new URL(request.url, "http://127.0.0.1");
+      // A path that is not even a URL ("//") must be refused like any other,
+      // not thrown on: an exception here would end the render being served.
+      let pathname;
+      try {
+        ({ pathname } = new URL(request.url, "http://127.0.0.1"));
+      } catch {
+        response.writeHead(404).end();
+        return;
+      }
       const module = request.method === "GET" ? moduleAt(pathname) : null;
       if (request.method !== "GET") response.writeHead(404).end();
       else if (pathname === "/") send(response, PAGE, "text/html; charset=utf-8");

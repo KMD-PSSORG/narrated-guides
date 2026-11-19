@@ -75,8 +75,10 @@ export const createFilm = (svg, data) => {
     for (const picture of score.pictures) if (picture.at <= t) showing = picture;
     for (const name in pictures) {
       const on = showing?.name === name;
+      // Both set on every frame, also for a hidden picture: an attribute left
+      // from an earlier frame would be state a frame must not have.
       pictures[name].setAttribute("display", on ? "inline" : "none");
-      if (on) pictures[name].setAttribute("opacity", Math.min(1, (t - showing.at) / FADE).toFixed(3));
+      pictures[name].setAttribute("opacity", on ? Math.min(1, (t - showing.at) / FADE).toFixed(3) : "0");
     }
 
     // Chromium only repaints what changed, and the anti-aliasing along the
