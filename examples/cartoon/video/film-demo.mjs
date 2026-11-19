@@ -2,7 +2,8 @@
  * Renders the demo film: Dennis in his office.
  *
  *   cd examples/cartoon
- *   node ../../cli.mjs tts demo --say      # the free macOS voice; in a project: npx narrated-guides tts demo
+ *   NARRATED_GUIDES_VOICE_FILE=/path/to/voice.env node ../../cli.mjs tts demo   # in a project: npx narrated-guides tts demo
+ *                                          # (or tts demo --say, to try it first with the free macOS voice)
  *   node video/film-demo.mjs               # add --preview to watch it live instead
  *   node ../../cli.mjs assemble demo
  *   node ../../cli.mjs frames demo

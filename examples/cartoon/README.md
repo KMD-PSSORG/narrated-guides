@@ -5,11 +5,13 @@ shows a made-up app's front page on it, points at it while the camera moves
 in, and closes with raised eyebrows and open arms. It uses each of a film's
 cue verbs once.
 
-It runs without an ElevenLabs key, on the free macOS voice:
+It is voiced with ElevenLabs like every other video, from a voice file that
+stays outside the repo (`ELEVEN_LABS_API_KEY` and `VOICE_ID`, see the package
+README and its licence rule). The manuscript is Danish, so use a Danish voice:
 
 ```bash
 cd examples/cartoon
-node ../../cli.mjs tts demo --say      # voice the manuscript, with estimated word times
+NARRATED_GUIDES_VOICE_FILE=/path/to/voice.env node ../../cli.mjs tts demo   # about 280 characters
 node video/film-demo.mjs               # render the picture; ends by checking it comes out the same twice
 node ../../cli.mjs assemble demo       # video/out/demo/demo.mp4 and demo.srt
 node ../../cli.mjs frames demo         # a still at every cue, in video/out/demo/frames
@@ -21,9 +23,12 @@ To watch it live in a browser instead of rendering it:
 node video/film-demo.mjs --preview
 ```
 
-With the free voice the mouth is roughly right, not exactly: `say` gives no
-word times, so they are estimated. Drop `--say` to voice it with the
-project's ElevenLabs voice (see the licence rule in the package README).
+To try the mechanics before any characters are spent, `tts demo --say` uses
+the free macOS voice instead. It is a trial and not a voice to publish: it
+speaks with the system's default voice, whatever language that is (an English
+one will read this Danish manuscript as English), and its word times are
+estimates, so the mouth is only roughly right. A later `tts demo` without
+`--say` replaces the trial with the real voice.
 
 ## Layout
 

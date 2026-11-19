@@ -92,7 +92,9 @@ node video/film-<name>.mjs                 # a cartoon's picture, in place of a 
 
 `tts <name> --say` voices the manuscript with the free macOS voice instead,
 with estimated word times: a way to try a video before any characters are
-spent. It never replaces a scene that ElevenLabs voiced.
+spent, not a voice to publish. It speaks with the system's default voice,
+whatever language that is. It never replaces a scene that ElevenLabs voiced,
+and a later `tts <name>` replaces the trial with the real voice.
 
 `tts` sends a scene to ElevenLabs only when its text, its voice or the model
 has changed. Moving a cue costs nothing. It only moves the cue to another word.
@@ -424,12 +426,11 @@ another machine may draw it differently.
 
 ### Example
 
-`examples/cartoon/` is a short film that uses every verb once and runs
-without a key:
+`examples/cartoon/` is a short film in Danish that uses every verb once:
 
 ```bash
 cd examples/cartoon
-node ../../cli.mjs tts demo --say
+NARRATED_GUIDES_VOICE_FILE=/path/to/voice.env node ../../cli.mjs tts demo   # or tts demo --say, to try it first
 node video/film-demo.mjs
 node ../../cli.mjs assemble demo
 node ../../cli.mjs frames demo
