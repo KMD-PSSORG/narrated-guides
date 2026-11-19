@@ -11,12 +11,10 @@
  */
 import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { GAP, HOLD_END, LEAD_IN } from "./pacing.mjs";
 import { createStage } from "./stage.mjs";
 import { cueDue } from "./timing.mjs";
 
-const GAP = 0.45; // seconds of silence after each scene
-const LEAD_IN = 1.2; // title card on screen before the first word
-const HOLD_END = 2.5; // end card after the last word
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
