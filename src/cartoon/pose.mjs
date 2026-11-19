@@ -12,6 +12,7 @@
  *
  * Pure, so it also runs in a browser.
  */
+import { FORWARD } from "./aim.mjs";
 import { walkAt } from "./walk.mjs";
 
 const arm = (side, [upOut, upFwd, foreOut, foreFwd]) => ({
@@ -64,7 +65,7 @@ const asked = (moment) => {
       return { pose: { ...arm("l", [30, 15, 105, 35]), ...arm("r", [30, 15, 105, 35]) }, arms: ["l", "r"], hands: { l: "open", r: "open" } };
     case "peg": {
       const { arm: side, out, turn, body } = moment.aim;
-      return { pose: arm(side, [out, 45, out + 3, 45]), arms: [side], hands: { [side]: "point" }, turn, body };
+      return { pose: arm(side, [out, FORWARD, out + 3, FORWARD]), arms: [side], hands: { [side]: "point" }, turn, body };
     }
     case "bryn":
       return { pose: { brow: 1 }, arms: [], hands: {} };
@@ -73,7 +74,13 @@ const asked = (moment) => {
   }
 };
 
-const weightOf = (moment, t) => envelope(t, { start: moment.start, ...MOMENTS[moment.verb] });
+/**
+ * How much of a moment there is at `t`. A moment knows when its scene begins
+ * (`from`) and is nothing before that, wind-up included: a gesture on a
+ * scene's first word must not start moving in the pause before the scene.
+ */
+const weightOf = (moment, t) =>
+  moment.from !== undefined && t < moment.from ? 0 : envelope(t, { start: moment.start, ...MOMENTS[moment.verb] });
 
 /** The pose asked for at `t`. `words` are the film's words, on its clock. */
 export const targetAt = (score, words, t) => {
@@ -90,7 +97,10 @@ export const targetAt = (score, words, t) => {
     const w = weightOf(moment, t);
     if (!w) continue;
     const ask = asked(moment);
-    for (const key in ask.pose) pose[key] += w * (ask.pose[key] - REST[key]);
+    // Towards its target from wherever the pose already is, not on top of it:
+    // a second gesture while the first is held takes the joints over, where
+    // adding both would send an arm twice as far.
+    for (const key in ask.pose) pose[key] += w * (ask.pose[key] - pose[key]);
     for (const side of ask.arms) taken[side] = Math.max(taken[side], Math.min(1, Math.max(0, w)));
     if (ask.turn !== undefined) pose.turn += w * (ask.turn - pose.turn);
     if (ask.body !== undefined) pose.body += w * (ask.body - pose.body);

@@ -14,7 +14,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { readVoiceSecrets } from "./config.mjs";
 import { API, failure, withTimestamps } from "./eleven.mjs";
@@ -69,8 +69,16 @@ export const manuscriptPath = (config, manuscript) =>
 /** A trial scene's hash. It can never equal a voiced scene's, so `tts` voices it properly later. */
 export const sayHash = (text) => `say:${createHash("sha256").update(text).digest("hex").slice(0, 16)}`;
 
-/** Stops the free voice from replacing a scene ElevenLabs voiced. A new scene and an earlier trial pass. */
-export const guardSay = (cached, id) => {
+/**
+ * Stops the free voice from replacing a scene ElevenLabs voiced. A new scene
+ * and an earlier trial pass. Audio with no record beside it (`hasAudio`
+ * without `cached`) does not: a voicing that was interrupted can leave a paid
+ * clip like that, and what cannot be shown to be a trial is not replaced.
+ */
+export const guardSay = (cached, id, hasAudio = false) => {
+  if (!cached && hasAudio) {
+    throw new Error(`${id}.mp3 has no record of where it came from, so it is not replaced by the free voice. If it is not a clip you paid for, delete ${id}.mp3 first.`);
+  }
   if (!cached || cached.timing === "say") return;
   throw new Error(
     `${id} was voiced by ElevenLabs and is not replaced by the free voice. To try the free voice anyway, delete ${id}.mp3 and ${id}.json first.`,
@@ -113,7 +121,7 @@ export const voiceManuscript = async (config, manuscript, { say = false } = {}) 
     const json = path.join(out, `${id}.json`);
 
     const cached = existsSync(json) ? JSON.parse(readFileSync(json, "utf8")) : null;
-    if (say) guardSay(cached, id);
+    if (say) guardSay(cached, id, existsSync(mp3));
     if (cached?.hash === hash && existsSync(mp3)) {
       const { cues, warning } = anchorCues(scene, cached.words);
       if (warning) console.warn(`  ${warning}`);
@@ -122,12 +130,18 @@ export const voiceManuscript = async (config, manuscript, { say = false } = {}) 
       continue;
     }
 
+    // The audio is written before its record can be, since the record needs
+    // the audio's length. If the run ends in between, what is left must not
+    // look like something it is not: a trial is marked as one before its
+    // audio exists, and a paid clip never sits beside a trial's record.
     let words, timing;
     if (say) {
+      writeFileSync(json, JSON.stringify({ scene: scene.number, hash: "say:unfinished", timing: "say" }));
       ({ words } = sayClip(out, id, scene.text));
       timing = "say";
     } else {
       const voiced = await voiceScene(voice, scene);
+      rmSync(json, { force: true });
       writeFileSync(mp3, voiced.audio);
       ({ words, timing } = voiced);
       characters += scene.text.length;

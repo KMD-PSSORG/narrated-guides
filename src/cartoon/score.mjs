@@ -72,9 +72,10 @@ export const checkCues = (cues, { set, pictures }) => {
  *
  * - `walks`: each from where the figure is when it sets off, so a walk can
  *   interrupt a walk without a jump.
- * - `moments`: `{ verb, target, at, start }`, and `aim` for a pointing. A
- *   moment that would start before its scene starts with the scene instead
- *   and is listed in `late` with how much it was held back.
+ * - `moments`: `{ verb, target, at, start, from }`, and `aim` for a pointing.
+ *   `from` is when its scene begins; it does not move before that. A moment
+ *   that would start before its scene starts with the scene instead and is
+ *   listed in `late` with how much it was held back.
  * - `gaze`, `pictures`, `shots`: states, with the moment they change.
  */
 export const scoreOf = (cues, { set, startX, shoulderY }) => {
@@ -100,7 +101,7 @@ export const scoreOf = (cues, { set, startX, shoulderY }) => {
         const wanted = at - LEAD[verb];
         const start = Math.max(cue.sceneStart, wanted);
         if (start > wanted) score.late.push({ verb, target, by: start - wanted });
-        const moment = { verb, target, at, start };
+        const moment = { verb, target, at, start, from: cue.sceneStart };
         if (verb === "peg") moment.aim = aimAt(standsAt(at), shoulderY, set.things[target]);
         score.moments.push(moment);
       }
