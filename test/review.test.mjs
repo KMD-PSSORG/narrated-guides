@@ -18,6 +18,12 @@ describe("stillTimes", () => {
     assert.ok(Math.abs(at - 3.7) < 1e-9);
   });
 
+  it("takes a video's stills as soon after a cue as its timeline asks, unless told otherwise", () => {
+    const film = { ...timeline, stillAfter: 0.6 };
+    assert.ok(Math.abs(stillTimes(film, cues)[1][1] - 2.8) < 1e-9);
+    assert.ok(Math.abs(stillTimes(film, cues, 1.5)[1][1] - 3.7) < 1e-9);
+  });
+
   it("gives a scene without cues only its start", () => {
     assert.equal(stillTimes(timeline, { 1: [] }).length, 1);
   });
