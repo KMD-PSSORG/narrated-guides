@@ -19,6 +19,7 @@ import path from "node:path";
 import { readVoiceSecrets } from "./config.mjs";
 import { API, failure, withTimestamps } from "./eleven.mjs";
 import { parseManuscript } from "./manuscript.mjs";
+import { UNFINISHED } from "./scenes.mjs";
 import { anchorCues } from "./timing.mjs";
 
 export const readManuscript = (file) => parseManuscript(readFileSync(file, "utf8"));
@@ -136,7 +137,7 @@ export const voiceManuscript = async (config, manuscript, { say = false } = {}) 
     // audio exists, and a paid clip never sits beside a trial's record.
     let words, timing;
     if (say) {
-      writeFileSync(json, JSON.stringify({ scene: scene.number, hash: "say:unfinished", timing: "say" }));
+      writeFileSync(json, JSON.stringify({ scene: scene.number, hash: UNFINISHED, timing: "say" }));
       ({ words } = sayClip(out, id, scene.text));
       timing = "say";
     } else {
