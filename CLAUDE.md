@@ -78,8 +78,10 @@ they load, and what that imports, must run there: no `node:` imports, no
   `src/` are part of the deployed site.
 - Film page: everything in `src/cartoon/` except `film.mjs`, `serve.mjs` and
   `index.mjs`, plus `src/pacing.mjs`. It has no import map, so these may only
-  use **relative** imports. `serve.mjs` serves them over a local port by
-  allow-list; it must never serve anything outside `src/`.
+  use **relative** imports. `serve.mjs` serves them over a local port. What
+  it serves is an allow-list: the page, the film's data, the one voice file
+  `film` hands it for a preview (at `/voice.mp3`), and `.mjs` files under
+  `src/`. A request must never be able to name any other file on the machine.
 
 Node-only work lives in `tts.mjs`, `say.mjs`, `scenes.mjs`, `recorder.mjs`,
 `assemble.mjs`, `review.mjs`, `config.mjs`, `pptx-file.mjs`, and
