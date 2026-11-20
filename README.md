@@ -22,6 +22,11 @@ PowerPoint: the speaker notes are the manuscript, and the result is a
 narrated deck that PowerPoint exports to video. See
 [Narrated PowerPoint decks](#narrated-powerpoint-decks).
 
+And there is a cartoon track: a drawn figure in a room walks, points and
+talks from the same kind of manuscript, rendered one frame at a time so that
+the same manuscript always gives the same film. See
+[Cartoon films](#cartoon-films).
+
 ## Requirements
 
 - Node 20 or later
@@ -32,7 +37,7 @@ narrated deck that PowerPoint exports to video. See
 ### ElevenLabs licence
 
 ElevenLabs' free plan is for internal use only. A video made with
-narrated-guides, whether from a manuscript or a deck, that is used for
+narrated-guides, whether a recording, a deck or a cartoon, that is used for
 anything other than internal use, such as for customers, on a public website
 or in marketing, **must** be voiced on a paid plan. The cheapest, about 6
 dollars a month at the time of writing, gives 30,000 credits. If in doubt,
@@ -82,7 +87,14 @@ node video/record-<name>.mjs               # record the screen, timed by the voi
 npx narrated-guides assemble <name> [file] # <file>.mp4 and <file>.srt, 1920 × 1080
 npx narrated-guides frames <name> [file]   # a still at each scene start and 1.5 s after each cue
 npx narrated-guides pptx <deck.pptx>       # a narrated deck from its speaker notes (see below)
+node video/film-<name>.mjs                 # a cartoon's picture, in place of a recording (see below)
 ```
+
+`tts <name> --say` voices the manuscript with the free macOS voice instead,
+with estimated word times: a way to try a video before any characters are
+spent, not a voice to publish. It speaks with the system's default voice,
+whatever language that is. It never replaces a scene that ElevenLabs voiced,
+and a later `tts <name>` replaces the trial with the real voice.
 
 `tts` sends a scene to ElevenLabs only when its text, its voice or the model
 has changed. Moving a cue costs nothing. It only moves the cue to another word.
@@ -316,13 +328,123 @@ to write Danish for a voice: no abbreviations, numbers and dates as they
 are said. To add it: Copilot
 → … → Manage skills → Custom skills → Add skill.
 
+## Cartoon films
+
+A drawn figure stands in a room, walks about and explains something. The
+film is made of SVG and is one function of time, so it is rendered one frame
+at a time instead of being recorded, and the same manuscript gives the same
+film every time. A correction is a change to a line of text.
+
+```text
+manuscript.md ──tts──▶ scene-NN.mp3 + word timings ──film──▶ raw.mkv + timeline.json ──assemble──▶ video.mp4 + video.srt
+```
+
+`tts`, `preview`, `assemble` and `frames` are the same commands as for a
+recording. The film script takes the recording script's place:
+
+```bash
+npx narrated-guides tts <name>             # or tts <name> --say, to try it for free
+node video/film-<name>.mjs                 # render the picture, timed by the voice
+node video/film-<name>.mjs --preview       # or watch it live in a browser, with its voice
+npx narrated-guides assemble <name>
+npx narrated-guides frames <name>          # a still 0.6 s after each cue
+```
+
+### The film script
+
+```js
+import { loadConfig } from "narrated-guides";
+import { film } from "narrated-guides/cartoon";
+import dennis from "narrated-guides/cartoon/figures/dennis.mjs";
+import office from "narrated-guides/cartoon/sets/office.mjs";
+
+const config = await loadConfig();
+
+await film(config, "demo", {
+  set: office,
+  cast: { default: { figure: dennis, at: "midt" } },   // voice name → figure, and the mark it starts at
+  pictures: { forside: "video/pictures/forside.png" }, // what {vis: forside} shows (svg, png or jpg)
+});
+```
+
+`cast` maps a voice from the manuscript to a figure; `default` is the
+default voice. A film has one figure for now. A scene spoken by a voice that
+is not in the cast is a narrator off screen: nobody's mouth moves, which is
+what a film wants while the camera is on the screen.
+
+### Cues
+
+The manuscript is the same format, with these verbs:
+
+| Cue | What happens | Lasts |
+|---|---|---|
+| `{gå: X}` | Walks to the mark X, facing the way it goes, and turns back to the front on arrival | It stays there |
+| `{se: X}` | Looks at the thing X: the head turns, the body does not. `{se: kamera}` looks out | Until the next `se` |
+| `{vis: X}` | Puts the picture X on the room's screen. `{vis: intet}` clears it | Until the next `vis` |
+| `{kamera: X}` | Moves the camera to the shot X | Until the next `kamera` |
+| `{peg: X}` | Points at the thing X, turning head and body towards it | A moment, then back |
+| `{vink: X}` | Waves. The target is free text, for the reader | A moment |
+| `{gestus: åben}` | Opens both arms | A moment |
+| `{bryn: op}` | Raises the eyebrows | A moment |
+
+- **What stays, stays across scenes.** A film is one continuous take: where
+  the figure stands, where it looks, what is on the screen and where the
+  camera is hold until a cue changes them. It opens with the figure at its
+  starting mark, looking out, an empty screen and the shot `total`.
+- **A gesture arrives on its word,** so it starts a little before it. A cue
+  on a scene's first word or two has no room for that; it starts with the
+  scene and is reported as late. Give it a couple of words first.
+- **A walk starts on its word** and takes as long as the distance. Give it
+  words to walk through. The figure may point or gesture while it walks.
+- **Pointing aims in height, not in depth.** The room is flat: the figure
+  turns half way towards the side the thing is on, points with the arm on
+  that side, and lifts it to the thing's height.
+- An unknown verb, mark, thing, picture or shot stops the run before
+  anything is rendered, with a list of what there is.
+
+The mouth takes its shape from the letters of the word being spoken.
+
+### Sets and figures
+
+A set names what a manuscript can refer to: `marks` (places to stand),
+`things` (points to look and point at), `screen` (where a picture goes) and
+`shots` (parts of the room for the camera). The office has the marks `midt`
+and `skærm`, the things `skærm`, `vindue` and `bærbar`, and the shots `total`
+and `skærm`. A figure is its drawings and sizes; the rig that moves it is
+shared. Both are plain data in `src/cartoon/sets/` and `src/cartoon/figures/`,
+so another room or another figure is another file. Their drawings are
+inserted into the page as they are, so they must come from the project and
+never from user input.
+
+### The same film twice
+
+Every render ends by opening a fresh browser, rendering twelve frames spread
+over the film again, out of order, and comparing them byte for byte with the
+first pass. The run fails if any differs. The promise is for the same machine
+and the same browser version: text in a set uses the system's fonts, so
+another machine may draw it differently.
+
+### Example
+
+`examples/cartoon/` is a short film in Danish that uses every verb once:
+
+```bash
+cd examples/cartoon
+NARRATED_GUIDES_VOICE_FILE=/path/to/voice.env node ../../cli.mjs tts demo   # or tts demo --say, to try it first
+node video/film-demo.mjs
+node ../../cli.mjs assemble demo
+node ../../cli.mjs frames demo
+```
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-These cover the manuscript parser, timing, subtitles, the stage, the config
-and narrated decks (against a plain deck and one with PowerPoint's own
-click animations, in `test/fixtures/`). The recorder, the voice and ffmpeg
-are exercised by the example.
+These cover the manuscript parser, timing, subtitles, the stage, the config,
+narrated decks (against a plain deck and one with PowerPoint's own click
+animations, in `test/fixtures/`), and the parts of a film that need no
+browser: its timeline, the score its cues become, poses, walking, turning,
+the mouth, the springs, the camera and the local server. The recorder, the
+film renderer, the voice and ffmpeg are exercised by the examples.

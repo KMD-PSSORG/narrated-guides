@@ -7,7 +7,10 @@
     "narrated-guides": "cli.mjs"
   },
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./src/index.mjs",
+    "./cartoon": "./src/cartoon/index.mjs",
+    "./cartoon/figures/*": "./src/cartoon/figures/*",
+    "./cartoon/sets/*": "./src/cartoon/sets/*"
   },
   "scripts": {
     "test": "node --test"

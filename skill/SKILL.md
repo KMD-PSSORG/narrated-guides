@@ -29,6 +29,16 @@ exports to video. The same stops apply: the notes are approved before any
 characters are spent. For people without a terminal, point them to the page
 in `web/pptx/` and to the Copilot skill in `copilot/narrate-deck-notes/`.
 
+When the video is a cartoon rather than a recording, use the film track: a
+drawn figure in a room, driven by the same kind of manuscript with its own
+verbs (`{gå: mark}`, `{peg: thing}`, `{se: thing}`, `{vis: picture}`,
+`{kamera: shot}`, `{vink: …}`, `{gestus: åben}`, `{bryn: op}`). The project's
+`video/film-<name>.mjs` takes the recording script's place, and
+`--preview` on it shows the film live. `npx narrated-guides tts <name> --say`
+voices a manuscript with the free macOS voice, to try a film before any
+characters are spent; it never replaces a scene ElevenLabs voiced. The stops
+are the same: plan, manuscript, voice, then the film and its frames.
+
 ## Stops: wait for the human at each one
 
 Each stop costs something to undo: ElevenLabs characters, recording time, or
@@ -119,6 +129,28 @@ recording.
 - **Run long commands in the foreground.** A voicing or recording started in
   the background can die when the shell session ends.
 
+## Writing for a figure
+
+- **Give a gesture a word or two first.** A wave, a pointing, raised
+  eyebrows and open arms start a little before their word. On a scene's first
+  word there is no room; the film prints `… s late`. "Hej {vink: hej} med
+  dig" is on time.
+- **Give a walk words to walk through.** A `{gå}` starts on its word and
+  takes a couple of seconds across a room. Put it early in a sentence, and
+  put what the figure does on arrival in the next one.
+- **Point on the word that names the thing.** `{peg: skærm}` turns head and
+  body to the screen; say what is on it while the arm is up.
+- **States stay, across scenes too.** The figure stands where it last
+  walked, looks where `{se}` last sent it, and the screen and the camera stay
+  as they were. End a look with `{se: kamera}` and a close-up with
+  `{kamera: total}`.
+- **Let a narrator talk over a close-up.** A scene in a voice that is not in
+  the cast moves nobody's mouth.
+- **Only names the set has.** Marks, things, shots and pictures are checked
+  before anything is rendered, and the message lists what there is.
+- **Look at the frames,** one at a time: the pose each cue asks for is on
+  its still, and nothing stands in front of what the voice talks about.
+
 ## Constructed data
 
 - Only use fictional people and data made for the videos. Never use real people.
@@ -139,7 +171,7 @@ recording.
 - Logins and tokens for the app go in `initScripts` or a custom
   `openBrowser`, read from the environment. Never write them into
   manuscripts or recording scripts.
-- The HTML of cards and roles is inserted into the page as is. Build it only from the project's own text.
+- The HTML of cards and roles is inserted into the page as is. Build it only from the project's own text. The same goes for a film's set, its figure and its pictures.
 
 ## Files
 

@@ -38,6 +38,21 @@ export const wordsFromCharacters = (characters, starts, ends) => {
 };
 
 /**
+ * Word times for a clip that came without any: each word gets a share of the
+ * clip by its length plus one, for the space after it. An estimate, for the
+ * free voice.
+ */
+export const spreadWords = (spoken, duration) => {
+  const total = spoken.reduce((n, word) => n + word.length + 1, 0);
+  let passed = 0;
+  return spoken.map((text) => {
+    const start = (passed / total) * duration;
+    passed += text.length + 1;
+    return { text, start, end: (passed / total) * duration };
+  });
+};
+
+/**
  * Each cue with `at`, the second its word starts, and `anchor`, the word. A cue
  * after the last word is timed at that word's end. When the voice timed a
  * different number of words than the text holds, cues are still matched by

@@ -29,11 +29,32 @@ export const preview = (config, video) => {
 };
 
 /**
- * A still `after` seconds past each cue, and one at each scene's start, as
- * <video>/frames/sNN-<verb>-<target>.jpg. The cue's moment is where the
- * recorder started that scene, plus the lead-in, plus the word's time.
+ * The name and the moment of each still: one just after each scene's voice
+ * starts, and one `after` seconds past each cue: a second and a half, unless
+ * the video's timeline asks for another (a film's gestures are over sooner
+ * than the result of a click). `cuesByScene` holds each
+ * scene's cues under its number. A scene's `start` in the timeline is where
+ * its voice begins, and the finished video is cut from `timeline.start`, so
+ * the difference is the moment in the video.
  */
-export const frames = (config, video, name = video, { after = 1.5, width = 1100 } = {}) => {
+export const stillTimes = (timeline, cuesByScene, after = timeline.stillAfter ?? 1.5) => {
+  const shots = [];
+  for (const { scene, start } of timeline.scenes) {
+    const nn = String(scene).padStart(2, "0");
+    const base = start - timeline.start;
+    shots.push([`s${nn}-start`, base + 0.3]);
+    for (const cue of cuesByScene[scene] ?? []) {
+      shots.push([`s${nn}-${cue.verb}-${cue.target}`.replace(/[^\p{L}\p{N}.-]+/gu, "_"), base + cue.at + after]);
+    }
+  }
+  return shots;
+};
+
+/**
+ * A still `after` seconds past each cue, and one at each scene's start, as
+ * <video>/frames/sNN-<verb>-<target>.jpg.
+ */
+export const frames = (config, video, name = video, { after, width = 1100 } = {}) => {
   const out = path.join(config.outDir, video);
   const mp4 = path.join(out, `${name}.mp4`);
   const timeline = JSON.parse(readFileSync(path.join(out, "timeline.json"), "utf8"));
@@ -41,14 +62,13 @@ export const frames = (config, video, name = video, { after = 1.5, width = 1100 
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
 
-  const shots = [];
-  for (const { scene, start } of timeline.scenes) {
-    const nn = String(scene).padStart(2, "0");
-    const { cues } = JSON.parse(readFileSync(path.join(out, "audio", `scene-${nn}.json`), "utf8"));
-    const base = start - timeline.start + 1.2;
-    shots.push([`s${nn}-start`, base + 0.3]);
-    for (const cue of cues) shots.push([`s${nn}-${cue.verb}-${cue.target}`.replace(/[^\p{L}\p{N}.-]+/gu, "_"), base + cue.at + after]);
-  }
+  const cuesByScene = Object.fromEntries(
+    timeline.scenes.map(({ scene }) => {
+      const nn = String(scene).padStart(2, "0");
+      return [scene, JSON.parse(readFileSync(path.join(out, "audio", `scene-${nn}.json`), "utf8")).cues];
+    }),
+  );
+  const shots = stillTimes(timeline, cuesByScene, after);
   for (const [file, at] of shots) {
     execFileSync("ffmpeg", ["-loglevel", "error", "-y", "-ss", at.toFixed(2), "-i", mp4, "-frames:v", "1",
       "-vf", `scale=${width}:-1`, path.join(dir, `${file}.jpg`)]);

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 680" font-family="Helvetica, Arial, sans-serif">
+  <!-- A made-up app's front page, drawn for this example. -->
+  <rect width="1100" height="680" fill="#f6f5fb"/>
+  <rect width="1100" height="96" fill="#2c2947"/>
+  <circle cx="60" cy="48" r="22" fill="#43b02a"/>
+  <text x="100" y="60" font-size="34" font-weight="700" fill="#ffffff">Noter</text>
+  <rect x="880" y="22" width="180" height="52" rx="26" fill="#43b02a"/>
+  <text x="970" y="58" font-size="28" font-weight="700" fill="#ffffff" text-anchor="middle">Gemt ✓</text>
+
+  <text x="60" y="170" font-size="40" font-weight="700" fill="#1f1e2b">Mine noter</text>
+  <g fill="#ffffff" stroke="#d9d6ea" stroke-width="3">
+    <rect x="60" y="210" width="980" height="120" rx="14"/>
+    <rect x="60" y="350" width="980" height="120" rx="14"/>
+    <rect x="60" y="490" width="980" height="120" rx="14"/>
+  </g>
+  <g font-size="30" font-weight="700" fill="#1f1e2b">
+    <text x="96" y="262">Indkøbsliste</text>
+    <text x="96" y="402">Idéer til sommerfesten</text>
+    <text x="96" y="542">Mødet på torsdag</text>
+  </g>
+  <g font-size="24" fill="#6b6880">
+    <text x="96" y="302">Mælk, kaffe, hæfteklammer</text>
+    <text x="96" y="442">Tegnefilm i stedet for slides?</text>
+    <text x="96" y="582">Husk at vise forsiden frem</text>
+  </g>
+</svg>

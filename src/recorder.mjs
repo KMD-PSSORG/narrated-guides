@@ -9,14 +9,13 @@
  *
  * Writes <outDir>/<video>/raw.webm and timeline.json for assemble.
  */
-import { mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { GAP, HOLD_END, LEAD_IN } from "./pacing.mjs";
+import { readScenes } from "./scenes.mjs";
 import { createStage } from "./stage.mjs";
 import { cueDue } from "./timing.mjs";
 
-const GAP = 0.45; // seconds of silence after each scene
-const LEAD_IN = 1.2; // title card on screen before the first word
-const HOLD_END = 2.5; // end card after the last word
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, Math.max(0, ms)));
 
@@ -28,13 +27,6 @@ const defaultOpenBrowser = async (viewport, contextOptions) => {
   page.setDefaultTimeout(30_000);
   return { browser, page };
 };
-
-const readScenes = (audioDir) =>
-  readdirSync(audioDir)
-    .filter((f) => /^scene-\d+\.json$/.test(f))
-    .sort()
-    .map((f) => JSON.parse(readFileSync(path.join(audioDir, f), "utf8")))
-    .map((scene) => ({ ...scene, number: scene.scene }));
 
 /**
  * `setup(tools)` returns the video's own parts:

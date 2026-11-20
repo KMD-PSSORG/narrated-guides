@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  The one page a film is both rendered and watched through (see serve.mjs).
+  The renderer calls window.render(t) for each frame and screenshots it. A
+  person gets a play button, and the same render(t) driven by the voice's clock.
+-->
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<title>narrated-guides – film</title>
+<style>
+  html, body { margin: 0; background: #14121f; overflow: hidden; }
+  svg { display: block; width: 100vw; height: 100vh; }
+  #play { position: fixed; inset: 0; margin: auto; width: 220px; height: 70px; font: 600 22px system-ui; cursor: pointer; }
+</style>
+</head>
+<body>
+<svg id="film" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+<button id="play" type="button" hidden>▶ Afspil</button>
+<script type="module">
+import { createFilm } from "/src/cartoon/player.mjs";
+
+const data = await (await fetch("/film.json")).json();
+const film = createFilm(document.getElementById("film"), data);
+await film.ready;
+window.film = film;
+window.render = film.render;
+film.render(0);
+document.documentElement.dataset.ready = "1";
+
+if (!navigator.webdriver) {
+  const audio = new Audio("/voice.mp3");
+  const button = document.getElementById("play");
+  button.hidden = false;
+  button.addEventListener("click", () => {
+    button.hidden = true;
+    audio.currentTime = 0;
+    audio.play();
+    const tick = () => {
+      film.render(Math.min(film.length, audio.currentTime));
+      if (audio.ended || audio.currentTime >= film.length) button.hidden = false;
+      else requestAnimationFrame(tick);
+    };
+    tick();
+  });
+}
+</script>
+</body>
+</html>

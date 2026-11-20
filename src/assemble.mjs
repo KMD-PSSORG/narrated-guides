@@ -14,6 +14,21 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { subtitleCues, toSrt } from "./subtitles.mjs";
 
+/** The file in the video's folder that holds its picture: the recording, unless the timeline names another. */
+export const pictureOf = (timeline) => timeline.picture ?? "raw.webm";
+
+/**
+ * ffmpeg's inputs and filter for the voice: each scene's audio delayed to its
+ * `start` and mixed at its own level, as the stream `[a]`. The picture is
+ * input 0, so the scenes are inputs 1 and up.
+ */
+export const voiceMix = (scenes) => ({
+  inputs: scenes.flatMap(({ mp3 }) => ["-i", mp3]),
+  filter:
+    scenes.map(({ start }, i) => `[${i + 1}:a]adelay=${Math.round(start * 1000)}:all=1[a${i}]`).join(";") +
+    `;${scenes.map((_, i) => `[a${i}]`).join("")}amix=inputs=${scenes.length}:normalize=0,apad[a]`,
+});
+
 export const assemble = (config, video, name = video) => {
   const out = path.join(config.outDir, video);
   const timeline = JSON.parse(readFileSync(path.join(out, "timeline.json"), "utf8"));
@@ -29,10 +44,8 @@ export const assemble = (config, video, name = video) => {
     };
   });
 
-  const inputs = ["-i", path.join(out, "raw.webm")];
-  scenes.forEach(({ mp3 }) => inputs.push("-i", mp3));
-  const delays = scenes.map(({ start }, i) => `[${i + 1}:a]adelay=${Math.round(start * 1000)}:all=1[a${i}]`).join(";");
-  const mix = `${scenes.map((_, i) => `[a${i}]`).join("")}amix=inputs=${scenes.length}:normalize=0,apad[a]`;
+  const voice = voiceMix(scenes);
+  const inputs = ["-i", path.join(out, pictureOf(timeline)), ...voice.inputs];
   const picture = `[0:v]trim=start=${offset.toFixed(3)},setpts=PTS-STARTPTS,fps=30,scale=1920:1080:flags=lanczos[v]`;
 
   const mp4 = path.join(out, `${name}.mp4`);
@@ -41,7 +54,7 @@ export const assemble = (config, video, name = video) => {
     [
       "-v", "error", "-y",
       ...inputs,
-      "-filter_complex", `${picture};${delays};${mix}`,
+      "-filter_complex", `${picture};${voice.filter}`,
       "-map", "[v]", "-map", "[a]",
       "-t", length.toFixed(3),
       "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",

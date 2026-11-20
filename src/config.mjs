@@ -27,9 +27,10 @@ const DEFAULTS = {
 
 const MIME = { ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg" };
 
-const dataUri = (file) => {
+/** A picture from the project (a logo, or a still for a film's screen) as a data URI. */
+export const dataUri = (file) => {
   const mime = MIME[path.extname(file).toLowerCase()];
-  if (!mime) throw new Error(`The logo ${file} is not an svg, png or jpg.`);
+  if (!mime) throw new Error(`${file} is not an svg, png or jpg.`);
   return `data:${mime};base64,${readFileSync(file).toString("base64")}`;
 };
 
